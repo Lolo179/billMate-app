@@ -1,23 +1,30 @@
 package com.billMate.gateway.config;
 
+import com.billMate.gateway.filter.AuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
+@RequiredArgsConstructor
 @Configuration
-@EnableWebFluxSecurity
 public class SecurityConfig {
 
+    private final AuthenticationFilter authenticationFilter;
+
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/auth/**", "/billing/**").permitAll()
+                .authorizeExchange(exchange -> exchange
+                        .pathMatchers("/auth/**").permitAll()
+                        .pathMatchers("/billing/**").authenticated()
                         .anyExchange().permitAll()
                 )
+                .addFilterBefore(authenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 }
+
