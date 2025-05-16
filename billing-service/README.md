@@ -24,27 +24,20 @@ Este proyecto sigue una arquitectura **contract-first**. A partir del contrato `
 ### 📁 Archivos generados
 
 Los archivos generados se encuentran en:
-
 target/generated-sources/openapi/src/main/java/com/billMate/billing/api
 target/generated-sources/openapi/src/main/java/com/billMate/billing/model
-
-
 > ⚠️ Estos archivos **no deben ser modificados manualmente** ni versionados en Git.
-
 
 ---
 
-## ✅ Resultado final (limpio y funcional)
-
-```markdown
 ## 🔧 Comandos útiles
 
 ### ▶️ Compilar y generar clases desde el contrato
 
 ```bash
+
 mvn clean install
-
-
+```
 
 Puedes visualizar el contrato OpenAPI directamente en Swagger Editor:
 
