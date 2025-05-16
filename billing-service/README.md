@@ -39,3 +39,13 @@ target/generated-sources/openapi/src/main/java/com/billMate/billing/model
 
 ```bash
 mvn clean install
+
+---
+
+
+## 📘 Ver la documentación Swagger UI
+
+Puedes visualizar el contrato OpenAPI directamente en Swagger Editor:
+
+[![Ver en Swagger Editor](https://img.shields.io/badge/Swagger--UI-View%20Contract-green?logo=swagger)](https://editor.swagger.io/?url=https://raw.githubusercontent.com/Lolo179/billMate-app/feature/billing-service/src/main/resources/openapi/contract-billing.yaml)
+
