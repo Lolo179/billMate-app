@@ -19,15 +19,8 @@ target/
 *.iml
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
+# Build y clases generadas
+**/target/
+**/generated-sources/
+**/src/main/java/com/billMate/*/api/
+**/src/main/java/com/billMate/*/model/

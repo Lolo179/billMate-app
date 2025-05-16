@@ -1,0 +1,206 @@
+openapi: 3.0.1
+info:
+  title: BillMate - Billing Service API
+  version: 1.0.0
+  description: API de gestión de clientes y facturación
+
+tags:
+  - name: clients
+    description: Endpoints para gestión de clientes
+
+paths:
+  /clients:
+    get:
+      tags: [clients]
+      summary: Obtener todos los clientes
+      responses:
+        '200':
+          description: Lista de clientes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+              examples:
+                clienteEjemplo:
+                  value:
+                    - id: 1
+                      name: "Juan Pérez"
+                      email: "juanperez@mail.com"
+                      phone: "+34 600 123 456"
+                      nif: "12345678Z"
+                      address: "Calle Falsa 123, Madrid"
+                      createdAt: "2025-05-15T14:30:00Z"
+                    - id: 2
+                      name: "Luisa Pérez"
+                      email: "luisaperez@mail.com"
+                      phone: "+34 600 123 456"
+                      nif: "12345678X"
+                      address: "Calle Falsa 123, Madrid"
+                      createdAt: "2025-05-15T14:30:00Z"
+        '400':
+          description: Petición mal formada
+        '500':
+          description: Error interno del servidor
+
+    post:
+      tags: [clients]
+      summary: Crear nuevo cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '201':
+          description: Cliente creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+              examples:
+                clienteEjemplo:
+                  value:
+                    id: 1
+                    name: "Juan Pérez"
+                    email: "juanperez@mail.com"
+                    phone: "+34 600 123 456"
+                    nif: "12345678Z"
+                    address: "Calle Falsa 123, Madrid"
+                    createdAt: "2025-05-15T14:30:00Z"
+        '400':
+          description: Petición mal formada
+        '500':
+          description: Error interno del servidor
+
+  /clients/{id}:
+    get:
+      tags: [clients]
+      summary: Obtener cliente por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Cliente encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+              examples:
+                clienteEjemplo:
+                  summary: Ejemplo de cliente encontrado
+                  value:
+                    id: 1
+                    name: "Juan Pérez"
+                    email: "juanperez@mail.com"
+                    phone: "+34 600 123 456"
+                    nif: "12345678Z"
+                    address: "Calle Falsa 123, Madrid"
+                    createdAt: "2025-05-15T14:30:00Z"
+        '400':
+          description: Petición mal formada
+        '404':
+          description: Cliente no encontrado
+        '500':
+          description: Error interno del servidor
+
+    put:
+      tags: [clients]
+      summary: Actualizar cliente existente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: Cliente actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+              examples:
+                clienteEjemplo:
+                  value:
+                    id: 1
+                    name: "Juan Pérez"
+                    email: "juanperez@mail.com"
+                    phone: "+34 600 123 456"
+                    nif: "12345678Z"
+                    address: "Calle Falsa 123, Madrid"
+                    createdAt: "2025-05-15T14:30:00Z"
+        '400':
+          description: Petición mal formada
+        '404':
+          description: Cliente no encontrado
+        '500':
+          description: Error interno del servidor
+
+    delete:
+      tags: [clients]
+      summary: Eliminar cliente por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Cliente eliminado exitosamente
+        '400':
+          description: Petición mal formada
+        '404':
+          description: Cliente no encontrado
+        '500':
+          description: Error interno del servidor
+
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - nif
+        - address
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: "Juan Pérez"
+        email:
+          type: string
+          format: email
+          example: "juanperez@mail.com"
+        phone:
+          type: string
+          example: "+34 600 123 456"
+        nif:
+          type: string
+          example: "12345678Z"
+        address:
+          type: string
+          example: "Calle Falsa 123, Madrid"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-05-15T14:30:00Z"
