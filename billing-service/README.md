@@ -31,8 +31,12 @@ target/generated-sources/openapi/src/main/java/com/billMate/billing/model
 
 > ⚠️ Estos archivos **no deben ser modificados manualmente** ni versionados en Git.
 
+
 ---
 
+## ✅ Resultado final (limpio y funcional)
+
+```markdown
 ## 🔧 Comandos útiles
 
 ### ▶️ Compilar y generar clases desde el contrato
@@ -40,10 +44,7 @@ target/generated-sources/openapi/src/main/java/com/billMate/billing/model
 ```bash
 mvn clean install
 
----
 
-
-## 📘 Ver la documentación Swagger UI
 
 Puedes visualizar el contrato OpenAPI directamente en Swagger Editor:
 
