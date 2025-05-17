@@ -1,2 +1,2 @@
--- Crear base de datos para auth-service
-CREATE DATABASE billmate_auth;
+-- Crear base de datos
+CREATE DATABASE billmate_app;

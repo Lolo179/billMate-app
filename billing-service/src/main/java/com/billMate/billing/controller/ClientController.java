@@ -1,54 +1,48 @@
 package com.billMate.billing.controller;
 
 import com.billMate.billing.api.ClientsApi;
-import com.billMate.billing.model.Client;
+import com.billMate.billing.model.ClientDTO;
+import com.billMate.billing.model.NewClientDTO;
+import com.billMate.billing.service.ClientService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 public class ClientController implements ClientsApi {
 
+    private final ClientService clientService;
+
     @Override
-    public ResponseEntity<List<Client>> getClients() {
-        // 🧪 Solo mock inicial
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<ClientDTO> createClient(NewClientDTO newClientDTO) {
+        ClientDTO saved = clientService.createClient(newClientDTO);
+        return ResponseEntity.status(201).body(saved);
     }
 
     @Override
-    public ResponseEntity<Client> createClient(Client client) {
-        // 🧪 Devuelve el mismo cliente como si se hubiera guardado
-        return ResponseEntity.status(201).body(client);
-    }
-
-    @Override
-    public ResponseEntity<Client> getClientById(Long id) {
-        // 🧪 Devuelve cliente dummy
-        Client dummy = new Client();
-        dummy.setId(id);
-        dummy.setName("Cliente Test");
-        dummy.setEmail("cliente@mail.com");
-        dummy.setPhone("+34 600 123 123");
-        dummy.setNif("12345678Z");
-        dummy.setAddress("Calle Falsa 123");
-        dummy.setCreatedAt(OffsetDateTime.parse("2025-05-15T00:00:00Z"));
-
-        return ResponseEntity.ok(dummy);
-    }
-
-    @Override
-    public ResponseEntity<Client> updateClient(Long id, Client client) {
-        // 🧪 Simula actualización
-        client.setId(id);
+    public ResponseEntity<ClientDTO> getClientById(Long clientId) {
+        ClientDTO client = clientService.getClientById(clientId);
         return ResponseEntity.ok(client);
     }
 
     @Override
-    public ResponseEntity<Void> deleteClient(Long id) {
-        // 🧪 Simula borrado
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<List<ClientDTO>> getClients() {
+        List<ClientDTO> clients = clientService.getAllClients();
+        return ResponseEntity.ok(clients);
     }
 
+    @Override
+    public ResponseEntity<ClientDTO> updateClient(Long clientId, NewClientDTO newClientDTO) {
+        ClientDTO updated = clientService.updateClient(clientId, newClientDTO);
+        return ResponseEntity.ok(updated);
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteClient(Long clientId) {
+        clientService.deleteClient(clientId);
+        return ResponseEntity.noContent().build();
+    }
 }

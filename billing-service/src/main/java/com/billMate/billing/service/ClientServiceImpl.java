@@ -1,9 +1,8 @@
 package com.billMate.billing.service;
 
-import com.billMate.billing.config.MapperConfig;
 import com.billMate.billing.entity.ClientEntity;
-import com.billMate.billing.model.Client;
-import com.billMate.billing.model.ClientService;
+import com.billMate.billing.model.ClientDTO;
+import com.billMate.billing.model.NewClientDTO;
 import com.billMate.billing.repository.JpaRepository.ClientRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +10,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,54 +21,45 @@ public class ClientServiceImpl implements ClientService {
     private final ModelMapper modelMapper;
 
     @Override
-    public Client createClient(Client client) {
-
-        ClientEntity clientEntity = modelMapper.map(client, ClientEntity.class);
+    public ClientDTO createClient(NewClientDTO newClientDTO) {
+        ClientEntity clientEntity = modelMapper.map(newClientDTO, ClientEntity.class);
         clientEntity.setCreatedAt(OffsetDateTime.now());
         ClientEntity saved = clientRepository.save(clientEntity);
-
-        return modelMapper.map(saved, Client.class);
+        return modelMapper.map(saved, ClientDTO.class);
     }
 
     @Override
-    public Client getClientById(Long id) {
-        ClientEntity client = clientRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Client not found with ID: " + id));
-
-        return modelMapper.map(client, Client.class);
+    public ClientDTO getClientById(Long clientId) {
+        ClientEntity entity = clientRepository.findById(clientId)
+                .orElseThrow(() -> new EntityNotFoundException("Client not found with ID: " + clientId));
+        return modelMapper.map(entity, ClientDTO.class);
     }
 
     @Override
-    public List<Client> getAllClients() {
-        List<ClientEntity> entities = clientRepository.findAll();
-        List<Client> clients = new ArrayList<>();
-
-        for (ClientEntity entity : entities) {
-            Client client = modelMapper.map(entity, Client.class);
-            clients.add(client);
-        }
-
-        return clients;
+    public List<ClientDTO> getAllClients() {
+        return clientRepository.findAll()
+                .stream()
+                .map(entity -> modelMapper.map(entity, ClientDTO.class))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Client updateClient(Long id, Client client) {
-        ClientEntity existing = clientRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Client not found with ID: " + id));
+    public ClientDTO updateClient(Long clientId, NewClientDTO newClientDTO) {
+        ClientEntity existing = clientRepository.findById(clientId)
+                .orElseThrow(() -> new EntityNotFoundException("Client not found with ID: " + clientId));
 
-        modelMapper.map(client, existing);
-        existing.setId(id);
+        modelMapper.map(newClientDTO, existing); // copia los campos actualizables
+        existing.setId(clientId); // aseguramos que el ID no cambia
         ClientEntity updated = clientRepository.save(existing);
 
-        return modelMapper.map(updated, Client.class);
+        return modelMapper.map(updated, ClientDTO.class);
     }
 
     @Override
-    public void deleteClient(Long id) {
-        if (!clientRepository.existsById(id)) {
-            throw new EntityNotFoundException("Client not found with ID: " + id);
+    public void deleteClient(Long clientId) {
+        if (!clientRepository.existsById(clientId)) {
+            throw new EntityNotFoundException("Client not found with ID: " + clientId);
         }
-        clientRepository.deleteById(id);
+        clientRepository.deleteById(clientId);
     }
-
 }
