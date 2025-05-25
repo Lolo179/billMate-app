@@ -11,6 +11,7 @@ tags:
 paths:
   /clients:
     get:
+      operationId: getClients
       tags: [clients]
       summary: Obtener todos los clientes
       responses:
@@ -38,6 +39,7 @@ paths:
           description: Error interno del servidor
 
     post:
+      operationId: createClient
       tags: [clients]
       summary: Crear nuevo cliente
       requestBody:
@@ -70,6 +72,7 @@ paths:
 
   /clients/{clientId}:
     get:
+      operationId: getClientById
       tags: [clients]
       summary: Obtener cliente por ID
       parameters:
@@ -78,6 +81,7 @@ paths:
           required: true
           schema:
             type: integer
+            format: int64
             example: 1
       responses:
         '200':
@@ -105,6 +109,7 @@ paths:
           description: Error interno del servidor
 
     put:
+      operationId: updateClient
       tags: [clients]
       summary: Actualizar cliente existente
       parameters:
@@ -113,6 +118,7 @@ paths:
           required: true
           schema:
             type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -138,6 +144,7 @@ paths:
                     createdAt: "2025-05-15T14:30:00Z"
 
     delete:
+      operationId: deleteClient
       tags: [clients]
       summary: Eliminar cliente por ID
       parameters:
@@ -146,9 +153,11 @@ paths:
           required: true
           schema:
             type: integer
+            format: int64
       responses:
         '204':
           description: Cliente eliminado exitosamente
+
 
 
 components:
@@ -163,6 +172,8 @@ components:
       properties:
         name:
           type: string
+          minLength: 2
+          maxLength: 100
           example: "Juan Pérez"
         email:
           type: string
@@ -170,19 +181,18 @@ components:
           example: "juanperez@mail.com"
         phone:
           type: string
+          maxLength: 20
           example: "+34 600 123 456"
         nif:
           type: string
+          minLength: 9
+          maxLength: 9
+          pattern: '^\d{8}[A-Z]$'
           example: "12345678Z"
         address:
           type: string
+          minLength: 5
           example: "Calle Falsa 123, Madrid"
-      example:
-        name: "Juan Pérez"
-        email: "juanperez@mail.com"
-        phone: "+34 600 123 456"
-        nif: "12345678Z"
-        address: "Calle Falsa 123, Madrid"
 
     ClientDTO:
       allOf:

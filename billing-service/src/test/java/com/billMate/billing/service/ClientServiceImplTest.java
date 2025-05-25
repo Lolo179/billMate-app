@@ -3,7 +3,7 @@ package com.billMate.billing.service;
 import com.billMate.billing.entity.ClientEntity;
 import com.billMate.billing.model.ClientDTO;
 import com.billMate.billing.model.NewClientDTO;
-import com.billMate.billing.repository.JpaRepository.ClientRepository;
+import com.billMate.billing.repository.ClientRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
