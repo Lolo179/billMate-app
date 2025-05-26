@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -41,7 +43,10 @@ public class AuthServiceImpl implements AuthService {
 
         userRepository.save(user);
 
-        String token = jwtService.generateToken(user.getEmail());
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getRoles().stream().map(Role::name).toList());
+
+        String token = jwtService.generateToken(claims, user.getEmail());
 
         return AuthResponse.builder()
                 .token(token)
@@ -58,7 +63,10 @@ public class AuthServiceImpl implements AuthService {
         }
         System.out.println("LOGIN --> email: " + request.getEmail());
         System.out.println("LOGIN --> raw password: " + request.getPassword());
-        String token = jwtService.generateToken(user.getEmail());
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getRoles().stream().map(Role::name).toList());
+        String token = jwtService.generateToken(claims,user.getEmail());
 
         return AuthResponse.builder()
                 .token(token)

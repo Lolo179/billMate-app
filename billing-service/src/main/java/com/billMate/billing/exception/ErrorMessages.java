@@ -6,5 +6,5 @@ public class ErrorMessages {
     public static final String VALIDATION_FAILED = "La solicitud contiene errores de validación.";
     public static final String CONSTRAINT_VIOLATION = "Error de validación en los parámetros.";
     public static final String UNEXPECTED_ERROR = "Se produjo un error inesperado.";
-
+    public static final String INVALID_JSON = "El cuerpo de la solicitud contiene un JSON inválido.";
 }

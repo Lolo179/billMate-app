@@ -1,0 +1,132 @@
+{
+  "info": {
+    "name": "BillMate - E2E Collection",
+    "_postman_id": "e2e-billmate-collection",
+    "description": "Colección E2E para pruebas completas del billing-service a través del API Gateway.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 Login admin",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@mail.com\",\n  \"password\": \"admin123\"\n}"
+        },
+        "url": { "raw": "{{BASE_URL}}/auth/login", "host": ["{{BASE_URL}}"], "path": ["auth", "login"] }
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "const json = pm.response.json();",
+            "pm.environment.set(\"TOKEN\", json.token);"
+          ],
+          "type": "text/javascript"
+        }
+      }]
+    },
+    {
+      "name": "📥 Crear cliente válido",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Ana Gómez\",\n  \"email\": \"ana@mail.com\",\n  \"nif\": \"87654321T\",\n  \"address\": \"Av. Siempre Viva 123\"\n}"
+        },
+        "url": { "raw": "{{BASE_URL}}/billing/clients", "host": ["{{BASE_URL}}"], "path": ["billing", "clients"] }
+      }
+    },
+    {
+      "name": "❌ Crear cliente inválido",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"email\": \"no-email\",\n  \"nif\": \"XXXX\",\n  \"address\": \"\"\n}"
+        },
+        "url": { "raw": "{{BASE_URL}}/billing/clients", "host": ["{{BASE_URL}}"], "path": ["billing", "clients"] }
+      }
+    },
+    {
+      "name": "📃 Obtener todos los clientes",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+        ],
+        "url": { "raw": "{{BASE_URL}}/billing/clients", "host": ["{{BASE_URL}}"], "path": ["billing", "clients"] }
+      }
+    },
+    {
+      "name": "🕵️ Obtener cliente por ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+        ],
+        "url": { "raw": "{{BASE_URL}}/billing/clients/{{clientId}}", "host": ["{{BASE_URL}}"], "path": ["billing", "clients", "{{clientId}}"] }
+      }
+    },
+    {
+      "name": "✏️ Editar cliente",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Ana Modificada\",\n  \"email\": \"ana_mod@mail.com\",\n  \"nif\": \"12345678Z\",\n  \"address\": \"Nueva dirección 456\"\n}"
+        },
+        "url": { "raw": "{{BASE_URL}}/billing/clients/{{clientId}}", "host": ["{{BASE_URL}}"], "path": ["billing", "clients", "{{clientId}}"] }
+      }
+    },
+    {
+      "name": "❌ Editar cliente inválido",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"email\": \"sin-email\",\n  \"nif\": \"0000\",\n  \"address\": \"\"\n}"
+        },
+        "url": { "raw": "{{BASE_URL}}/billing/clients/{{clientId}}", "host": ["{{BASE_URL}}"], "path": ["billing", "clients", "{{clientId}}"] }
+      }
+    },
+    {
+      "name": "🗑️ Eliminar cliente",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+        ],
+        "url": { "raw": "{{BASE_URL}}/billing/clients/{{clientId}}", "host": ["{{BASE_URL}}"], "path": ["billing", "clients", "{{clientId}}"] }
+      }
+    },
+    {
+      "name": "❌ Eliminar cliente inexistente",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{TOKEN}}" }
+        ],
+        "url": { "raw": "{{BASE_URL}}/billing/clients/9999", "host": ["{{BASE_URL}}"], "path": ["billing", "clients", "9999"] }
+      }
+    }
+  ]
+}

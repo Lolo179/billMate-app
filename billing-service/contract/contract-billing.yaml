@@ -35,8 +35,16 @@ paths:
                       createdAt: "2025-05-15T14:30:00Z"
         '400':
           description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
         '500':
           description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
 
     post:
       operationId: createClient
@@ -67,8 +75,16 @@ paths:
                     createdAt: "2025-05-15T14:30:00Z"
         '400':
           description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
         '500':
           description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
 
   /clients/{clientId}:
     get:
@@ -103,10 +119,28 @@ paths:
                     createdAt: "2025-05-15T14:30:00Z"
         '400':
           description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Acceso prohibido. El usuario no tiene permisos suficientes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
         '404':
           description: Cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
         '500':
           description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
 
     put:
       operationId: updateClient
@@ -142,6 +176,30 @@ paths:
                     nif: "12345678Z"
                     address: "Calle Falsa 123, Madrid"
                     createdAt: "2025-05-15T14:30:00Z"
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Acceso no autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
 
     delete:
       operationId: deleteClient
@@ -157,11 +215,54 @@ paths:
       responses:
         '204':
           description: Cliente eliminado exitosamente
-
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Acceso prohibido. El usuario no tiene permisos suficientes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
 
 
 components:
   schemas:
+    ApiError:
+      type: object
+      properties:
+        status:
+          type: string
+          example: NOT_FOUND
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: Cliente no encontrado con el ID especificado.
+        errors:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-05-25T17:42:01Z"
     NewClientDTO:
       type: object
       required:

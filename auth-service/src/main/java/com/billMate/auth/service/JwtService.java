@@ -1,5 +1,7 @@
 package com.billMate.auth.service;
 
+import com.billMate.auth.model.Role;
+import com.billMate.auth.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -17,8 +20,10 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    public String generateToken(String subject){
-        return generateToken(Map.of(),subject);
+    public String generateTokenForUser(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getRoles().stream().map(Role::name).toList());
+        return generateToken(claims, user.getEmail());
     }
 
     public String generateToken(Map<String, Object> extraClaims, String subject){

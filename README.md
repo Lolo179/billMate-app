@@ -32,3 +32,8 @@
 - Las rutas del `billing-service` están protegidas por el `api-gateway`
 - Se valida el JWT directamente en el gateway usando un filtro reactivo personalizado
 - El token se debe incluir en el header:
+
+
+Desde la terminal, ejecuta el siguiente comando (requiere el usuario postgres):
+``` psql -U postgres -f scripts/init-db.sql
+```
