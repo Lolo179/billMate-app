@@ -16,6 +16,7 @@ import java.util.List;
 public class ApiError {
 
     private HttpStatus status;
+    private int code;
     private String message;
     private OffsetDateTime timestamp;
     private List<String> errors;
@@ -23,6 +24,7 @@ public class ApiError {
     public static ApiError of(HttpStatus status, String message, List<String> errors) {
         return ApiError.builder()
                 .status(status)
+                .code(status.value())
                 .message(message)
                 .timestamp(OffsetDateTime.now())
                 .errors(errors)
