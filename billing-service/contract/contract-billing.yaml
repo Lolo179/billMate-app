@@ -7,7 +7,8 @@ info:
 tags:
   - name: clients
     description: Endpoints para gestión de clientes
-
+  - name: invoices
+    description: Endpoints para gestión de facturas
 paths:
   /clients:
     get:
@@ -15,14 +16,14 @@ paths:
       tags: [clients]
       summary: Obtener todos los clientes
       responses:
-        '200':
+        "200":
           description: Lista de clientes
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ClientDTO'
+                  $ref: "#/components/schemas/ClientDTO"
               examples:
                 clienteEjemplo:
                   value:
@@ -33,18 +34,18 @@ paths:
                       nif: "12345678Z"
                       address: "Calle Falsa 123, Madrid"
                       createdAt: "2025-05-15T14:30:00Z"
-        '400':
+        "400":
           description: Petición mal formada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiError'
-        '500':
+                $ref: "#/components/schemas/ApiError"
+        "500":
           description: Error interno del servidor
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiError'
+                $ref: "#/components/schemas/ApiError"
 
     post:
       operationId: createClient
@@ -55,14 +56,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewClientDTO'
+              $ref: "#/components/schemas/NewClientDTO"
       responses:
-        '201':
+        "201":
           description: Cliente creado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientDTO'
+                $ref: "#/components/schemas/ClientDTO"
               examples:
                 clienteEjemplo:
                   value:
@@ -73,18 +74,18 @@ paths:
                     nif: "12345678Z"
                     address: "Calle Falsa 123, Madrid"
                     createdAt: "2025-05-15T14:30:00Z"
-        '400':
+        "400":
           description: Petición mal formada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiError'
-        '500':
+                $ref: "#/components/schemas/ApiError"
+        "500":
           description: Error interno del servidor
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiError'
+                $ref: "#/components/schemas/ApiError"
 
   /clients/{clientId}:
     get:
@@ -100,12 +101,12 @@ paths:
             format: int64
             example: 1
       responses:
-        '200':
+        "200":
           description: Cliente encontrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientDTO'
+                $ref: "#/components/schemas/ClientDTO"
               examples:
                 clienteEjemplo:
                   summary: Ejemplo de cliente encontrado
@@ -117,6 +118,151 @@ paths:
                     nif: "12345678Z"
                     address: "Calle Falsa 123, Madrid"
                     createdAt: "2025-05-15T14:30:00Z"
+        "400":
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Acceso prohibido. El usuario no tiene permisos suficientes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+    put:
+      operationId: updateClient
+      tags: [clients]
+      summary: Actualizar cliente existente
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewClientDTO"
+      responses:
+        "200":
+          description: Cliente actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientDTO"
+              examples:
+                clienteEjemplo:
+                  value:
+                    clientId: 1
+                    name: "Juan Pérez"
+                    email: "juanperez@mail.com"
+                    phone: "+34 600 123 456"
+                    nif: "12345678Z"
+                    address: "Calle Falsa 123, Madrid"
+                    createdAt: "2025-05-15T14:30:00Z"
+        "400":
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Acceso no autorizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Eliminar cliente por ID
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Cliente eliminado exitosamente
+        "400":
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "403":
+          description: Acceso prohibido. El usuario no tiene permisos suficientes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    
+  /clients/{clientId}/invoices:
+    get:
+      operationId: getInvoicesByClientId
+      tags: [invoices]
+      summary: Obtener todas las facturas de un cliente
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        '200':
+          description: Lista de facturas del cliente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvoiceDTO'
         '400':
           description: Petición mal formada
           content:
@@ -142,12 +288,114 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiError'
 
-    put:
-      operationId: updateClient
-      tags: [clients]
-      summary: Actualizar cliente existente
+
+  /invoices:
+    get:
+      operationId: getInvoices
+      tags: [invoices]
+      summary: Obtener todas las facturas
+      responses:
+        '200':
+          description: Lista de facturas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvoiceDTO'
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+    post:
+      operationId: createInvoice
+      tags: [invoices]
+      summary: Crear una nueva factura
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewInvoiceDTO'
+      responses:
+        '201':
+          description: Factura creada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceDTO'
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /invoices/{invoiceId}:
+    get:
+      operationId: getInvoiceById
+      tags: [invoices]
+      summary: Obtener factura por ID
       parameters:
-        - name: clientId
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Factura encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceDTO'
+        '400':
+          description: Petición mal formada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Acceso prohibido. El usuario no tiene permisos suficientes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Factura no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+    put:
+      operationId: updateInvoice
+      tags: [invoices]
+      summary: Actualizar factura existente
+      parameters:
+        - name: invoiceId
           in: path
           required: true
           schema:
@@ -158,24 +406,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewClientDTO'
+              $ref: '#/components/schemas/NewInvoiceDTO'
       responses:
         '200':
-          description: Cliente actualizado
+          description: Factura actualizada correctamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientDTO'
-              examples:
-                clienteEjemplo:
-                  value:
-                    clientId: 1
-                    name: "Juan Pérez"
-                    email: "juanperez@mail.com"
-                    phone: "+34 600 123 456"
-                    nif: "12345678Z"
-                    address: "Calle Falsa 123, Madrid"
-                    createdAt: "2025-05-15T14:30:00Z"
+                $ref: '#/components/schemas/InvoiceDTO'
         '400':
           description: Petición mal formada
           content:
@@ -183,13 +421,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiError'
         '404':
-          description: Cliente no encontrado
+          description: Factura no encontrada
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
         '403':
-          description: Acceso no autorizado
+          description: Acceso prohibido. El usuario no tiene permisos suficientes.
           content:
             application/json:
               schema:
@@ -202,11 +440,11 @@ paths:
                 $ref: '#/components/schemas/ApiError'
 
     delete:
-      operationId: deleteClient
-      tags: [clients]
-      summary: Eliminar cliente por ID
+      operationId: deleteInvoice
+      tags: [invoices]
+      summary: Eliminar factura por ID
       parameters:
-        - name: clientId
+        - name: invoiceId
           in: path
           required: true
           schema:
@@ -214,7 +452,7 @@ paths:
             format: int64
       responses:
         '204':
-          description: Cliente eliminado exitosamente
+          description: Factura eliminada correctamente
         '400':
           description: Petición mal formada
           content:
@@ -222,7 +460,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiError'
         '404':
-          description: Cliente no encontrado
+          description: Factura no encontrada
           content:
             application/json:
               schema:
@@ -297,19 +535,19 @@ components:
 
     ClientDTO:
       allOf:
-      - $ref: '#/components/schemas/NewClientDTO'
-      - type: object
-        required:
-          - clientId
-        properties:
-          clientId:
-            type: integer
-            format: int64
-            example: 1
-          createdAt:
-            type: string
-            format: date-time
-            example: "2025-05-15T14:30:00Z"
+        - $ref: "#/components/schemas/NewClientDTO"
+        - type: object
+          required:
+            - clientId
+          properties:
+            clientId:
+              type: integer
+              format: int64
+              example: 1
+            createdAt:
+              type: string
+              format: date-time
+              example: "2025-05-15T14:30:00Z"
       example:
         clientId: 1
         name: "Juan Pérez"
@@ -318,3 +556,108 @@ components:
         nif: "12345678Z"
         address: "Calle Falsa 123, Madrid"
         createdAt: "2025-05-15T14:30:00Z"
+
+    InvoiceDTO:
+      type: object
+      required:
+      - invoiceId
+      - clientId
+      - date
+      - invoiceLines
+      properties:
+        invoiceId:
+          type: integer
+          format: int64
+          example: 1
+        clientId:
+          type: integer
+          format: int64
+          example: 5
+        date:
+          type: string
+          format: date
+          example: "2025-06-01"
+        invoiceLines:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceLine"
+        total:
+          type: number
+          readOnly: true
+          example: 1500.00
+        status:
+          type: string
+          enum: [DRAFT, SENT, PAID, CANCELLED]
+          example: DRAFT
+        createdAt:
+          type: string
+          format: date-time
+        taxPercentage:
+          type: number
+          format: double
+          readOnly: true
+          example: 21
+        description:
+          type: string
+          maxLength: 255
+          example: "Proyecto web completo"
+
+    NewInvoiceDTO:
+      type: object
+      required:
+        - clientId
+        - date
+        - invoiceLines
+      properties:
+        clientId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 3
+        date:
+          type: string
+          format: date
+          example: "2025-06-01"
+        invoiceLines:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/InvoiceLine'
+        status:
+          type: string
+          enum: [DRAFT, SENT, PAID, CANCELLED]
+          default: DRAFT
+        description:
+          type: string
+          maxLength: 255
+          example: "Proyecto web completo"
+
+    InvoiceLine:
+      type: object
+      required:
+        - description
+        - quantity
+        - unitPrice
+      properties:
+        description:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "Desarrollo Web"
+        quantity:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 5
+        unitPrice:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 100.00
+        total:
+          type: number
+          format: double
+          readOnly: true
+          example: 500.00
+
+
