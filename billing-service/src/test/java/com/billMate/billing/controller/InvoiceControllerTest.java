@@ -140,7 +140,7 @@ public class InvoiceControllerTest {
 
         when(invoiceService.getInvoicesByClientId(5L)).thenReturn(List.of(i1, i2));
 
-        mockMvc.perform(get("/clients/5/invoices"))
+        mockMvc.perform(get("/invoices/client/5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].invoiceId").value(1))

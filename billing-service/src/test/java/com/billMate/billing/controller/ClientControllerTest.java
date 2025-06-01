@@ -64,7 +64,7 @@ public class ClientControllerTest {
         mockMvc.perform(get("/clients/999"))
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value(ErrorMessages.CLIENT_NOT_FOUND))
+                .andExpect(jsonPath("$.message").value(ErrorMessages.RESOURCE_NOT_FOUND))
                 .andExpect(jsonPath("$.errors[0]").value("ID 999 no encontrado"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
@@ -147,7 +147,7 @@ public class ClientControllerTest {
             """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value(ErrorMessages.CLIENT_NOT_FOUND))
+                .andExpect(jsonPath("$.message").value(ErrorMessages.RESOURCE_NOT_FOUND))
                 .andExpect(jsonPath("$.errors[0]").value("ID 999 no encontrado"));
     }
 
@@ -179,7 +179,7 @@ public class ClientControllerTest {
                         .with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value(ErrorMessages.CLIENT_NOT_FOUND))
+                .andExpect(jsonPath("$.message").value(ErrorMessages.RESOURCE_NOT_FOUND))
                 .andExpect(jsonPath("$.errors[0]").value("ID 999 no encontrado"));
     }
 

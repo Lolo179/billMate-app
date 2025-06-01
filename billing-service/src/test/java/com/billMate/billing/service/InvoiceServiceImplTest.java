@@ -5,6 +5,7 @@ import com.billMate.billing.entity.InvoiceEntity;
 import com.billMate.billing.enums.InvoiceStatus;
 import com.billMate.billing.model.InvoiceDTO;
 
+import com.billMate.billing.model.InvoiceLine;
 import com.billMate.billing.model.NewInvoiceDTO;
 import com.billMate.billing.repository.ClientRepository;
 import com.billMate.billing.repository.InvoiceRepository;
@@ -65,18 +66,36 @@ public class InvoiceServiceImplTest {
     @Test
     void updateInvoice_shouldUpdate_whenExists() {
         // Given
+        ClientEntity mockClient = ClientEntity.builder()
+                .id(1L)
+                .name("Mock Cliente")
+                .email("mock@mail.com")
+                .nif("12345678A")
+                .phone("123456789")
+                .address("Calle Falsa 123")
+                .createdAt(OffsetDateTime.now())
+                .build();
+
         InvoiceEntity existing = InvoiceEntity.builder()
                 .invoiceId(10L)
+                .client(mockClient)
                 .invoiceLines(new ArrayList<>())
                 .build();
 
         NewInvoiceDTO dto = new NewInvoiceDTO()
+                .clientId(1L)
                 .date(LocalDate.now())
                 .status(NewInvoiceDTO.StatusEnum.SENT)
                 .description("Actualizada")
-                .invoiceLines(List.of());
+                .invoiceLines(List.of(
+                        new InvoiceLine()
+                                .description("Servicio actualizado")
+                                .quantity(2.0)
+                                .unitPrice(100.0)
+                ));
 
         when(invoiceRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(mockClient));
         when(invoiceRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
@@ -84,6 +103,8 @@ public class InvoiceServiceImplTest {
 
         // Then
         assertNotNull(result);
+        assertEquals("Actualizada", result.getDescription());
+        assertEquals(BigDecimal.valueOf(200.00).setScale(2), result.getTotal());
         verify(invoiceRepository).save(existing);
     }
 

@@ -2,6 +2,7 @@ package com.billMate.billing.service;
 
 import com.billMate.billing.BillServiceApplication;
 import com.billMate.billing.model.*;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +28,8 @@ public class InvoiceServiceIntegrationTest {
 
     @Autowired
     private ClientService clientService;
+
+
 
     @Test
     void givenValidInvoice_whenCreateAndFind_thenPersisted() {
@@ -49,7 +53,7 @@ public class InvoiceServiceIntegrationTest {
         // Then
         assertNotNull(found);
         assertEquals(savedClient.getClientId(), found.getClientId());
-        assertEquals(BigDecimal.valueOf(200.00).setScale(2), found.getTotal());
+        assertEquals(BigDecimal.valueOf(242.00).setScale(2), found.getTotal());
         assertEquals(1, found.getInvoiceLines().size());
     }
 
@@ -134,4 +138,72 @@ public class InvoiceServiceIntegrationTest {
         // Then
         assertEquals(2, invoices.size());
     }
+
+    @Test
+    void givenInvoiceWithoutLines_whenCreate_thenThrowsException() {
+        // Given
+        ClientDTO client = clientService.createClient(new NewClientDTO("Sin Líneas", "nolines@mail.com", "11112222Z", "Sin calle"));
+
+        NewInvoiceDTO invoice = new NewInvoiceDTO()
+                .clientId(client.getClientId())
+                .date(LocalDate.now())
+                .invoiceLines(Collections.emptyList()); // sin líneas
+
+        // When + Then
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(invoice));
+    }
+
+    @Test
+    void givenLineWithZeroQuantity_whenCreate_thenThrowsException() {
+        // Given
+        ClientDTO client = clientService.createClient(new NewClientDTO("Cantidad Cero", "zero@mail.com", "22223333Z", "Calle Cero"));
+
+        NewInvoiceDTO invoice = new NewInvoiceDTO()
+                .clientId(client.getClientId())
+                .date(LocalDate.now())
+                .invoiceLines(List.of(
+                        new InvoiceLine()
+                                .description("Producto inválido")
+                                .quantity(0.0)
+                                .unitPrice(100.0)
+                ));
+
+        // When + Then
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(invoice));
+    }
+
+    @Test
+    void givenNonexistentClient_whenCreateInvoice_thenThrowsException() {
+        // Given
+        NewInvoiceDTO invoice = new NewInvoiceDTO()
+                .clientId(99999L) // cliente inexistente
+                .date(LocalDate.now())
+                .invoiceLines(List.of(new InvoiceLine()
+                        .description("Inexistente")
+                        .quantity(1.0)
+                        .unitPrice(100.0)));
+
+        // When + Then
+        assertThrows(EntityNotFoundException.class, () -> invoiceService.createInvoice(invoice));
+    }
+
+    @Test
+    void givenLineWithoutDescription_whenCreate_thenThrowsException() {
+        ClientDTO client = clientService.createClient(new NewClientDTO("Sin Desc", "desc@mail.com", "33334444Z", "Calle sin nombre"));
+
+        NewInvoiceDTO invoice = new NewInvoiceDTO()
+                .clientId(client.getClientId())
+                .date(LocalDate.now())
+                .invoiceLines(List.of(
+                        new InvoiceLine()
+                                .description("") // vacío
+                                .quantity(1.0)
+                                .unitPrice(100.0)
+                ));
+
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(invoice));
+    }
+
+
+
 }

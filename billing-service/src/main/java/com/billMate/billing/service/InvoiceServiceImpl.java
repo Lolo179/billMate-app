@@ -15,7 +15,10 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,23 +46,71 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public InvoiceDTO createInvoice(NewInvoiceDTO newInvoiceDTO) {
+
+        //Validacion del cliente
         ClientEntity client = clientRepository.findById(newInvoiceDTO.getClientId())
-                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Cliente con ID " + newInvoiceDTO.getClientId() + " no encontrado."));
 
-        InvoiceEntity invoice = modelMapper.map(newInvoiceDTO, InvoiceEntity.class);
-        invoice.setClient(client);
+        // valicacion de líneas
+        if (newInvoiceDTO.getInvoiceLines() == null || newInvoiceDTO.getInvoiceLines().isEmpty()) {
+            throw new IllegalArgumentException("Una factura debe tener al menos una línea.");
+        }
+        List<InvoiceLineEntity> validatedLines = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
 
-        for (InvoiceLineEntity line : invoice.getInvoiceLines()) {
-            line.setInvoice(invoice);
-            line.calcularTotal();
+        for (InvoiceLine lineDto : newInvoiceDTO.getInvoiceLines()) {
+            if (lineDto.getDescription() == null || lineDto.getDescription().isBlank()) {
+                throw new IllegalArgumentException("Cada línea debe tener una descripción.");
+            }
+
+
+            if (lineDto.getUnitPrice() == null || lineDto.getQuantity() == null ||
+                    lineDto.getUnitPrice() <= 0 || lineDto.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Precio y cantidad deben ser mayores a cero.");
+            }
+
+            BigDecimal price = BigDecimal.valueOf(lineDto.getUnitPrice());
+            BigDecimal quantity = BigDecimal.valueOf(lineDto.getQuantity());
+
+            BigDecimal lineTotal = price.multiply(quantity);
+            total = total.add(lineTotal);
+
+            validatedLines.add(
+                    InvoiceLineEntity.builder()
+                            .description(lineDto.getDescription())
+                            .quantity(quantity)
+                            .unitPrice(price)
+                            .total(lineTotal)
+                            .build()
+            );
         }
 
-        invoice.recalculateTotal();
-        invoice.setCreatedAt(LocalDateTime.now());
+        //Calcular IVA (21%)
+        BigDecimal taxPercentage = BigDecimal.valueOf(21);
+        BigDecimal taxAmount = total.multiply(taxPercentage).divide(BigDecimal.valueOf(100));
+        BigDecimal finalTotal = total.add(taxAmount);
 
-        InvoiceEntity saved = invoiceRepository.save(invoice);
 
+        //Construir la entidad y persistir
+        InvoiceEntity entity = InvoiceEntity.builder()
+                .client(client)
+                .date(newInvoiceDTO.getDate())
+                .description(newInvoiceDTO.getDescription())
+                .status(newInvoiceDTO.getStatus() != null
+                        ? InvoiceStatus.valueOf(newInvoiceDTO.getStatus().name())
+                        : InvoiceStatus.DRAFT)
+                .invoiceLines(validatedLines)
+                .taxPercentage(taxPercentage)
+                .total(finalTotal)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        // Asignar la relación inversa (line -> invoice)
+        validatedLines.forEach(line -> line.setInvoice(entity));
+
+        InvoiceEntity saved = invoiceRepository.save(entity);
         return modelMapper.map(saved, InvoiceDTO.class);
+
     }
 
     @Override
@@ -67,21 +118,48 @@ public class InvoiceServiceImpl implements InvoiceService {
         InvoiceEntity invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Factura no encontrada"));
 
+        ClientEntity client = clientRepository.findById(newInvoiceDTO.getClientId())
+                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+
+        invoice.setClient(client);
         invoice.setDate(newInvoiceDTO.getDate());
         invoice.setDescription(newInvoiceDTO.getDescription());
         invoice.setStatus(InvoiceStatus.valueOf(newInvoiceDTO.getStatus().name()));
 
         invoice.getInvoiceLines().clear();
+
+        BigDecimal total = BigDecimal.ZERO;
+
         for (InvoiceLine lineDto : newInvoiceDTO.getInvoiceLines()) {
-            InvoiceLineEntity line = modelMapper.map(lineDto, InvoiceLineEntity.class);
-            line.setInvoice(invoice);
-            line.calcularTotal();
+            if (lineDto.getDescription() == null || lineDto.getDescription().isBlank()) {
+                throw new IllegalArgumentException("Cada línea debe tener una descripción.");
+            }
+
+            if (lineDto.getUnitPrice() == null || lineDto.getQuantity() == null ||
+                    lineDto.getUnitPrice() <= 0 || lineDto.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Precio y cantidad deben ser mayores a cero.");
+            }
+
+            BigDecimal price = BigDecimal.valueOf(lineDto.getUnitPrice());
+            BigDecimal quantity = BigDecimal.valueOf(lineDto.getQuantity());
+            BigDecimal lineTotal = price.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
+
+            InvoiceLineEntity line = InvoiceLineEntity.builder()
+                    .description(lineDto.getDescription())
+                    .quantity(quantity)
+                    .unitPrice(price)
+                    .total(lineTotal)
+                    .invoice(invoice)
+                    .build();
+
             invoice.getInvoiceLines().add(line);
+            total = total.add(lineTotal);
         }
 
-        invoice.recalculateTotal();
-        InvoiceEntity updated = invoiceRepository.save(invoice);
-        return modelMapper.map(updated, InvoiceDTO.class);
+        invoice.setTotal(total.setScale(2, RoundingMode.HALF_UP));
+
+        InvoiceEntity saved = invoiceRepository.save(invoice);
+        return modelMapper.map(saved, InvoiceDTO.class);
     }
 
     @Override

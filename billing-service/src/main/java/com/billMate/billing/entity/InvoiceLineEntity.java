@@ -37,9 +37,4 @@ public class InvoiceLineEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
-    @PrePersist
-    @PreUpdate
-    public void calcularTotal() {
-        this.total = unitPrice.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
-    }
 }

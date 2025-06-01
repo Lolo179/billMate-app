@@ -241,7 +241,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
     
-  /clients/{clientId}/invoices:
+  /invoices/client/{clientId}:
     get:
       operationId: getInvoicesByClientId
       tags: [invoices]
