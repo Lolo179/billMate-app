@@ -1,0 +1,24 @@
+{
+  "id": "billmate-env",
+  "name": "BillMate-Environment",
+  "values": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8080",
+      "enabled": true
+    },
+    {
+      "key": "TOKEN",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "clientId",
+      "value": "1",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2025-05-26T00:00:00Z",
+  "_postman_exported_using": "Postman/10.0"
+}

@@ -1,0 +1,15 @@
+<nav class="main-header navbar navbar-expand navbar-white navbar-light"
+     xmlns:th="http://www.thymeleaf.org"
+     th:fragment="navbar">
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+            <span class="nav-link font-weight-bold" id="user-info">👤</span>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-danger" href="#" onclick="logout()">Cerrar sesión</a>
+        </li>
+    </ul>
+    <script th:src="@{/js/common.js}"></script>
+</nav>
+
+

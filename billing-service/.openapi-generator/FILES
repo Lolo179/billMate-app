@@ -1,0 +1,6 @@
+README.md
+pom.xml
+src/main/java/com/billMate/billing/api/ApiUtil.java
+src/main/java/com/billMate/billing/api/ClientsApi.java
+src/main/java/com/billMate/billing/model/ClientDTO.java
+src/main/java/com/billMate/billing/model/NewClientDTO.java

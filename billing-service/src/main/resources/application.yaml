@@ -1,0 +1,31 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: billing
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/billmate_app
+    username: admin
+    password: admin123
+    driver-class-name: org.postgresql.Driver
+
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG

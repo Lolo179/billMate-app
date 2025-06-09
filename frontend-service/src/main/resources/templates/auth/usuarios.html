@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head"></head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+    <div th:replace="fragments/navbar :: navbar"></div>
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content-wrapper">
+        <section class="content pt-4">
+            <div class="container-fluid">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>👥 Gestión de Usuarios <span class="badge badge-info" id="totalUsuarios">0</span></h2>
+                    <button id="btnAbrirModalNuevoUsuario" class="btn btn-primary" data-toggle="modal" data-target="#modalNuevoUsuario">
+                        ➕ Nuevo Usuario
+                    </button>
+                </div>
+
+                <table class="table table-hover table-bordered" id="tablaUsuarios">
+                    <thead class="thead-dark">
+                    <tr>
+                        <th>🆔 ID</th>
+                        <th>👤 Usuario</th>
+                        <th>📧 Email</th>
+                        <th>🛡 Roles</th>
+                        <th>⚙️ Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Llenado dinámicamente con JS -->
+                    </tbody>
+                </table>
+
+            </div>
+        </section>
+    </div>
+
+
+    <div th:replace="fragments/footer :: footer"></div>
+</div>
+
+<!-- Modal Nuevo Usuario -->
+<div class="modal fade" id="modalNuevoUsuario" tabindex="-1" role="dialog" aria-labelledby="modalNuevoUsuarioLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="formNuevoUsuario" onsubmit="registrarUsuario(event)">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Usuario</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>👤 Username</label>
+                        <input type="text" class="form-control" id="nuevoUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label>📧 Email</label>
+                        <input type="email" class="form-control" id="nuevoEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🔒 Password</label>
+                        <input type="password" class="form-control" id="nuevoPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🎭 Rol</label>
+                        <select class="form-control" id="nuevoRol" required>
+                            <option value="USER">Usuario</option>
+                            <option value="ADMIN">Administrador</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Registrar</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+<script th:src="@{/plugins/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/dist/js/adminlte.min.js}"></script>
+<script th:src="@{/js/auth/usuarios.js}"></script>
+</body>
+</html>
