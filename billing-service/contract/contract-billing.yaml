@@ -477,6 +477,134 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
+      
+  /invoices/{invoiceId}/emit:
+    put:
+      operationId: emitInvoice
+      tags: [invoices]
+      summary: Emitir una factura en estado DRAFT
+      description: Cambia el estado de la factura a SENT y genera un PDF.
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: PDF generado correctamente
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: No se puede emitir una factura que no esté en estado DRAFT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Factura no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Acceso prohibido. El usuario no tiene permisos suficientes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+
+  /invoices/{invoiceId}/pdf:
+    get:
+      operationId: downloadInvoicePdf
+      tags: [invoices]
+      summary: Descargar el PDF de una factura
+      description: Devuelve un archivo PDF solo si la factura ya ha sido emitida.
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: PDF generado correctamente
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Factura no válida para descarga
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Factura no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /invoices/{invoiceId}/pay:
+    put:
+      operationId: payInvoice
+      tags: [invoices]
+      summary: Marcar factura como pagada
+      description: Cambia el estado de la factura a PAID.
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Factura actualizada a pagada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceDTO'
+        '400':
+          description: Factura no se puede pagar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Factura no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Acceso denegado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
 
 
 components:
@@ -659,5 +787,4 @@ components:
           format: double
           readOnly: true
           example: 500.00
-
 

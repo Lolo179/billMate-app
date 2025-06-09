@@ -88,6 +88,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiError);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex) {
+        ApiError error = new ApiError()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .code(HttpStatus.BAD_REQUEST.value())
+                .message("Operación no permitida")
+                .errors(List.of(ex.getMessage()))
+                .timestamp(OffsetDateTime.now());
+
+        return ResponseEntity.badRequest().body(error);
+    }
 
 
 }

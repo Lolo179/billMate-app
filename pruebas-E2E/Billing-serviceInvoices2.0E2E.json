@@ -90,6 +90,89 @@
           "path": ["billing", "invoices", "{{invoiceId}}"]
         }
       }
+    },
+    {
+      "name": "📤 Emitir factura",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{TOKEN}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}/emit",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "billing",
+            "invoices",
+            "{{invoiceId}}",
+            "emit"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "❌ Emitir factura inexistente",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{TOKEN}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/billing/invoices/9999/emit",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "billing",
+            "invoices",
+            "9999",
+            "emit"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "📄 Descargar factura en PDF",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{TOKEN}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}/pdf",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "billing",
+            "invoices",
+            "{{invoiceId}}",
+            "pdf"
+          ]
+        }
+      },
+      "response": []
     }
   ]
 }

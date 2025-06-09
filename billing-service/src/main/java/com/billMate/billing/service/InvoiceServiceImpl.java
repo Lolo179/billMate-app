@@ -10,6 +10,7 @@ import com.billMate.billing.model.InvoiceLine;
 import com.billMate.billing.model.NewInvoiceDTO;
 import com.billMate.billing.repository.ClientRepository;
 import com.billMate.billing.repository.InvoiceRepository;
+import com.billMate.billing.service.pdf.InvoicePdfGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final ClientRepository clientRepository;
     private final ModelMapper modelMapper;
+    private final InvoicePdfGenerator invoicePdfGenerator;
 
     @Override
     public List<InvoiceDTO> getAllInvoices() {
@@ -39,10 +42,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public InvoiceDTO getInvoiceById(Long invoiceId) {
-        InvoiceEntity invoice = invoiceRepository.findById(invoiceId)
+        InvoiceEntity invoice = invoiceRepository.findByIdWithLines(invoiceId)
                 .orElseThrow(() -> new EntityNotFoundException("Factura no encontrada"));
         return modelMapper.map(invoice, InvoiceDTO.class);
     }
+
 
     @Override
     public InvoiceDTO createInvoice(NewInvoiceDTO newInvoiceDTO) {
@@ -176,5 +180,54 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .map(invoice -> modelMapper.map(invoice, InvoiceDTO.class))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public byte[] emitInvoice(Long invoiceId) {
+        InvoiceEntity invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new EntityNotFoundException("Factura no encontrada"));
+
+        if (invoice.getStatus() != InvoiceStatus.DRAFT) {
+            throw new IllegalStateException("Solo las facturas en estado DRAFT pueden ser emitidas.");
+        }
+
+        if (invoice.getDate() == null) {
+            invoice.setDate(LocalDate.now());
+        }
+
+        invoice.setStatus(InvoiceStatus.SENT);
+        InvoiceEntity emitted = invoiceRepository.save(invoice);
+
+        // Generar PDF con el entity completo
+        return invoicePdfGenerator.generate(emitted);
+    }
+
+    @Override
+    public byte[] downloadInvoicePdf(Long invoiceId) {
+        InvoiceEntity invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new EntityNotFoundException("Factura no encontrada"));
+
+        if (invoice.getStatus() != InvoiceStatus.SENT && invoice.getStatus() != InvoiceStatus.PAID) {
+            throw new IllegalStateException("Solo se puede descargar el PDF de facturas emitidas.");
+        }
+
+        return invoicePdfGenerator.generate(invoice);
+    }
+
+    @Override
+    public InvoiceDTO markAsPaid(Long invoiceId) {
+        InvoiceEntity invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new EntityNotFoundException("Factura no encontrada"));
+
+        if (!invoice.getStatus().equals(InvoiceStatus.SENT)) {
+            throw new IllegalStateException("Solo se pueden marcar como pagadas las facturas en estado SENT.");
+        }
+
+        invoice.setStatus(InvoiceStatus.PAID);
+
+        InvoiceEntity saved = invoiceRepository.save(invoice);
+        return modelMapper.map(saved, InvoiceDTO.class);
+    }
+
+
 }
 

@@ -19,4 +19,12 @@ public interface InvoiceService {
     void deleteInvoice(Long invoiceId);
 
     List<InvoiceDTO> getInvoicesByClientId(Long clientId);
+
+    byte[] emitInvoice(Long invoiceId);
+
+    byte[] downloadInvoicePdf(Long invoiceId);
+
+    InvoiceDTO markAsPaid(Long invoiceId);
+
+
 }

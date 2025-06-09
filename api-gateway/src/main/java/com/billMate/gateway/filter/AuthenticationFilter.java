@@ -31,10 +31,27 @@ public class AuthenticationFilter implements WebFilter {
         System.out.println("\n🌐 [Gateway] Nueva solicitud a: " + path);
 
         // Rutas públicas
-        if (path.equals("/auth/login") || path.equals("/auth/register")) {
+        if (
+                path.equals("/auth/login") ||
+                        path.equals("/auth/register") ||
+                        path.equals("/login") ||
+                        path.equals("/") ||
+                        path.startsWith("/facturas") ||
+                        path.equals("/dashboard") ||
+                        path.equals("/clientes") ||
+                        path.startsWith("/plugins/") ||
+                        path.startsWith("/dist/") ||
+                        path.startsWith("/css/") ||
+                        path.startsWith("/js/") ||
+                        path.startsWith("/clientes/") ||
+                        path.startsWith("/facturas-cliente") ||
+                        path.equals("/usuarios")
+        ) {
             System.out.println("🔓 Ruta pública permitida sin autenticación.");
+            System.out.println("✅ Pasando al microservicio... Ruta final: " + path);
             return chain.filter(exchange);
         }
+
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -63,6 +80,13 @@ public class AuthenticationFilter implements WebFilter {
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             return exchange.getResponse().setComplete();
         }
+
+        if (path.startsWith("/auth/users") && !roles.contains("ADMIN")) {
+            System.out.println("🚫 Acceso denegado: solo ADMIN puede acceder a /auth/users");
+            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+            return exchange.getResponse().setComplete();
+        }
+
 
         // Crear contexto de seguridad (aunque no se use, se mantiene limpio)
         List<GrantedAuthority> authorities = roles.stream()

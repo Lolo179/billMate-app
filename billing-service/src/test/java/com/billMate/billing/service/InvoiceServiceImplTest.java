@@ -2,6 +2,7 @@ package com.billMate.billing.service;
 
 import com.billMate.billing.entity.ClientEntity;
 import com.billMate.billing.entity.InvoiceEntity;
+import com.billMate.billing.entity.InvoiceLineEntity;
 import com.billMate.billing.enums.InvoiceStatus;
 import com.billMate.billing.model.InvoiceDTO;
 
@@ -9,6 +10,8 @@ import com.billMate.billing.model.InvoiceLine;
 import com.billMate.billing.model.NewInvoiceDTO;
 import com.billMate.billing.repository.ClientRepository;
 import com.billMate.billing.repository.InvoiceRepository;
+import com.billMate.billing.service.pdf.InvoicePdfGenerator;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
@@ -30,13 +33,15 @@ public class InvoiceServiceImplTest {
     private ClientRepository clientRepository;
     private ModelMapper modelMapper;
     private InvoiceServiceImpl invoiceService;
+    private InvoicePdfGenerator invoicePdfGenerator;
 
     @BeforeEach
     void setUp() {
         invoiceRepository = mock(InvoiceRepository.class);
         clientRepository = mock(ClientRepository.class);
+        invoicePdfGenerator = mock(InvoicePdfGenerator.class);
         modelMapper = new ModelMapper();
-        invoiceService = new InvoiceServiceImpl(invoiceRepository, clientRepository, modelMapper);
+        invoiceService = new InvoiceServiceImpl(invoiceRepository, clientRepository, modelMapper,invoicePdfGenerator);
     }
 
     @Test
@@ -52,15 +57,15 @@ public class InvoiceServiceImplTest {
                 .total(BigDecimal.valueOf(100))
                 .build();
 
-        when(invoiceRepository.findById(10L)).thenReturn(Optional.of(entity));
+        when(invoiceRepository.findByIdWithLines(10L)).thenReturn(Optional.of(entity));
 
         // When
         InvoiceDTO result = invoiceService.getInvoiceById(10L);
 
         // Then
         assertNotNull(result);
-        assertEquals(Long.valueOf(10L), result.getInvoiceId());
-        verify(invoiceRepository, times(1)).findById(10L);
+        assertEquals(10L, result.getInvoiceId());
+        verify(invoiceRepository, times(1)).findByIdWithLines(10L);
     }
 
     @Test
@@ -147,4 +152,79 @@ public class InvoiceServiceImplTest {
         assertEquals(2, result.size());
         verify(invoiceRepository).findAllByClient_Id(1L);
     }
+
+    @Test
+    void emitInvoice_shouldUpdateStatusToSent_whenValidId() {
+        // Given
+        Long invoiceId = 1L;
+
+        InvoiceEntity entity = InvoiceEntity.builder()
+                .invoiceId(invoiceId)
+                .status(InvoiceStatus.DRAFT)
+                .invoiceLines(List.of(
+                        InvoiceLineEntity.builder()
+                                .description("Línea test")
+                                .quantity(BigDecimal.valueOf(2))
+                                .unitPrice(BigDecimal.valueOf(100))
+                                .total(BigDecimal.valueOf(200))
+                                .build()))
+                .total(BigDecimal.valueOf(200))
+                .date(LocalDate.now())
+                .client(ClientEntity.builder()
+                        .name("Cliente Test")
+                        .email("test@mail.com")
+                        .build())
+                .build();
+
+        byte[] dummyPdf = "PDF_BYTES".getBytes();
+
+        when(invoiceRepository.findById(invoiceId)).thenReturn(Optional.of(entity));
+        when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoicePdfGenerator.generate(any(InvoiceEntity.class))).thenReturn(dummyPdf);
+
+        // When
+        byte[] pdfContent = invoiceService.emitInvoice(invoiceId);
+
+        // Then
+        assertNotNull(pdfContent);
+        assertTrue(pdfContent.length > 0);
+        assertEquals("PDF_BYTES", new String(pdfContent));
+
+        verify(invoiceRepository).save(entity);
+        verify(invoicePdfGenerator).generate(entity);
+    }
+
+
+    @Test
+    void emitInvoice_shouldThrow_whenInvoiceNotFound() {
+        // Given
+        Long nonexistentId = 999L;
+        when(invoiceRepository.findById(nonexistentId)).thenReturn(Optional.empty());
+
+        // When & Then
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> {
+            invoiceService.emitInvoice(nonexistentId);
+        });
+        assertEquals("Factura no encontrada", ex.getMessage());
+    }
+
+    @Test
+    void shouldMarkInvoiceAsPaid() {
+        // given
+        InvoiceEntity sentInvoice = new InvoiceEntity();
+        sentInvoice.setInvoiceId(1L);
+        sentInvoice.setStatus(InvoiceStatus.SENT);
+
+        when(invoiceRepository.findById(1L)).thenReturn(Optional.of(sentInvoice));
+        when(invoiceRepository.save(any())).thenReturn(sentInvoice);
+
+        // when
+        InvoiceDTO result = invoiceService.markAsPaid(1L);
+
+        // then
+        assertEquals(InvoiceStatus.PAID.name(), result.getStatus().name());
+
+    }
+
+
 }

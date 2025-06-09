@@ -31,6 +31,7 @@ public class InvoiceServiceIntegrationTest {
 
 
 
+
     @Test
     void givenValidInvoice_whenCreateAndFind_thenPersisted() {
         // Given - primero creamos un cliente válido
@@ -204,6 +205,77 @@ public class InvoiceServiceIntegrationTest {
         assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(invoice));
     }
 
+    @Test
+    void givenInvoice_whenEmit_thenStatusChangesToSent() {
+        // Given
+        ClientDTO client = clientService.createClient(
+                new NewClientDTO("Cliente Emitir", "emit@mail.com", "11112222B", "Calle Emisión"));
+
+        NewInvoiceDTO dto = new NewInvoiceDTO()
+                .clientId(client.getClientId())
+                .date(LocalDate.now())
+                .status(NewInvoiceDTO.StatusEnum.DRAFT)
+                .invoiceLines(List.of(new InvoiceLine()
+                        .description("Servicio")
+                        .quantity(1.0)
+                        .unitPrice(50.0)));
+
+        InvoiceDTO created = invoiceService.createInvoice(dto);
+
+        // When
+        byte[] pdfBytes = invoiceService.emitInvoice(created.getInvoiceId());
+
+        // Then
+        assertNotNull(pdfBytes);
+        assertTrue(pdfBytes.length > 0, "El PDF generado no debe estar vacío");
+
+        InvoiceDTO updated = invoiceService.getInvoiceById(created.getInvoiceId());
+        assertEquals("SENT", updated.getStatus().name());
+    }
+
+    @Test
+    void givenAlreadySentInvoice_whenEmitAgain_thenThrowsException() {
+        // Given
+        ClientDTO client = clientService.createClient(
+                new NewClientDTO("Cliente Emitido", "sent@mail.com", "12344321Z", "Calle Sent"));
+
+        NewInvoiceDTO dto = new NewInvoiceDTO()
+                .clientId(client.getClientId())
+                .date(LocalDate.now())
+                .status(NewInvoiceDTO.StatusEnum.DRAFT)
+                .invoiceLines(List.of(new InvoiceLine()
+                        .description("Servicio único")
+                        .quantity(1.0)
+                        .unitPrice(100.0)));
+
+        InvoiceDTO created = invoiceService.createInvoice(dto);
+
+        // Emitir una vez (válido)
+        byte[] firstPdf = invoiceService.emitInvoice(created.getInvoiceId());
+        assertNotNull(firstPdf);
+
+        // When - intentar emitir de nuevo
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> invoiceService.emitInvoice(created.getInvoiceId())
+        );
+
+        // Then
+        assertEquals("Solo las facturas en estado DRAFT pueden ser emitidas.", exception.getMessage());
+    }
+
+
+    @Test
+    void emitInvoice_shouldFail_whenInvoiceDoesNotExist() {
+        // Given
+        Long fakeId = 9999L;
+
+        // When & Then
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> {
+            invoiceService.emitInvoice(fakeId);
+        });
+        assertEquals("Factura no encontrada", ex.getMessage());
+    }
 
 
 }
