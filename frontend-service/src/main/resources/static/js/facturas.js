@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const clienteId = urlParams.get("clienteId");
 
     if (clienteId) {
-        // 🧾 Mostrar facturas del cliente
+        // Mostrar facturas del cliente
         fetch(`/billing/invoices/client/${clienteId}`, {
             headers: {
                 "Authorization": `Bearer ${token}`

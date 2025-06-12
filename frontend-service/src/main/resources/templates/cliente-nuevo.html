@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head"></head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="fragments/navbar :: navbar"></div>
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content-wrapper">
+        <section class="content pt-4">
+            <div class="container-fluid">
+
+                <h2>👤 Nuevo Cliente</h2>
+
+                <form id="clienteForm">
+                    <div class="form-group">
+                        <label>Nombre completo</label>
+                        <input type="text" id="nombre" class="form-control" placeholder="Ej: Ana Gómez" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Correo electrónico</label>
+                        <input type="email" id="email" class="form-control" placeholder="Ej: ana@mail.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="telefono" class="form-control" placeholder="Ej: +34 600 123 456">
+                    </div>
+
+                    <div class="form-group">
+                        <label>NIF</label>
+                        <input type="text" id="nif" class="form-control" oninput="this.value = this.value.toUpperCase()" placeholder="Ej: 12345678Z" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <input type="text" id="direccion" class="form-control" placeholder="Ej: Calle Falsa 123, Madrid" required>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-success" id="btnGuardarCliente">💾 Guardar Cliente</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelarCliente" onclick="window.location.href='/clientes'">❌ Cancelar</button>
+                    </div>
+                </form>
+
+            </div>
+        </section>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+</div>
+
+<!-- Scripts -->
+<script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+<script th:src="@{/plugins/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/dist/js/adminlte.min.js}"></script>
+<script th:src="@{/js/cliente-nuevo.js}"></script> <!-- nuevo JS asociado -->
+
+</body>
+</html>
