@@ -47,9 +47,20 @@ public class InvoiceServiceImplTest {
     @Test
     void getInvoiceById_shouldReturnInvoice_whenExists() {
         // Given
+        ClientEntity client = ClientEntity.builder()
+                .id(1L)
+                .name("Cliente")
+                .email("cliente@mail.com")
+                .phone("600")
+                .nif("12345678Z")
+                .address("Dirección")
+                .invoices(List.of()) // o new ArrayList<>()
+                .createdAt(OffsetDateTime.now())
+                .build();
+
         InvoiceEntity entity = InvoiceEntity.builder()
                 .invoiceId(10L)
-                .client(new ClientEntity(1L, "Cliente", "cliente@mail.com", "600", "12345678Z", "Dirección", OffsetDateTime.now()))
+                .client(client)
                 .date(LocalDate.now())
                 .status(InvoiceStatus.PAID)
                 .createdAt(LocalDateTime.now())
@@ -67,6 +78,7 @@ public class InvoiceServiceImplTest {
         assertEquals(10L, result.getInvoiceId());
         verify(invoiceRepository, times(1)).findByIdWithLines(10L);
     }
+
 
     @Test
     void updateInvoice_shouldUpdate_whenExists() {

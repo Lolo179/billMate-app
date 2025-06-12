@@ -57,8 +57,12 @@ public class AuthController {
     @GetMapping("/usuarios")
     public String gestionUsuarios() {
         System.out.println("🟢 Mostrando pantalla de gestión de usuarios");
-        return "auth/usuarios"; // Esto carga templates/usuarios.html
+        return "auth/usuarios";
     }
 
-
+    @GetMapping ("/clientes/nuevo")
+    public String nuevoCliente() {
+        System.out.println("🟢 Mostrando pantalla de creación de cliente");
+        return "cliente-nuevo";
+    }
 }
