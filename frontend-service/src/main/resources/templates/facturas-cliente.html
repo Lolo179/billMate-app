@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head"></head>
+<body class="hold-transition sidebar-mini layout-fixed" th:attr="data-client-id=${clientId}">
+<div class="wrapper">
+
+    <div th:replace="fragments/navbar :: navbar"></div>
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content-wrapper">
+        <section class="content pt-4">
+            <div class="container-fluid">
+                <h2 class="mb-4">🧾 Facturas de <span th:text="${clientName}">Cliente</span></h2>
+
+                <table class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th>Referencia</th>
+                        <th>Fecha</th>
+                        <th>Importe</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody id="facturas-por-cliente">
+                    <!-- JS llenará aquí -->
+                    </tbody>
+                </table>
+
+                <!-- Paginación -->
+                <div class="d-flex justify-content-center mt-3">
+                    <nav>
+                        <ul class="pagination" id="paginacion-facturas-cliente"></ul>
+                    </nav>
+                </div>
+
+                <a href="/clientes" class="btn btn-secondary mt-3">⬅ Volver al Panel</a>
+            </div>
+        </section>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+</div>
+
+<!-- JS -->
+<script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+<script th:src="@{/plugins/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/dist/js/adminlte.min.js}"></script>
+<script th:src="@{/js/facturas-cliente.js}"></script>
+
+</body>
+</html>

@@ -1,17 +1,43 @@
-# BillMate - Sistema de Facturación para Pequeños Negocios
+<<<<<<< HEAD
 
-BillMate es una aplicación desarrollada para la gestión de facturación y clientes en pequeños negocios, utilizando una arquitectura basada en microservicios.
+=======
+#  BillMate
 
-## Arquitectura
-El proyecto está compuesto por los siguientes microservicios:
-1. **Auth Service**: Gestión de usuarios y autenticación con JWT.
-2. **Billing Service**: Gestión de facturación y clientes.
-3. **API Gateway**: Enrutamiento centralizado de las peticiones.
+**BillMate** es una aplicación de facturación para pequeños negocios, construida con arquitectura de microservicios, desarrollada como proyecto de TFG en el ciclo de DAW.
 
-### Tecnologías
-- Backend: Java 17, Spring Boot, Maven
-- Seguridad: Spring Security, JWT
-- API Gateway: Spring Cloud Gateway
-- Base de Datos: PostgreSQL
-- Documentación: Swagger (OpenAPI)
-- Frontend: Angular con TypeScript (futuro)  
+---
+
+##  Arquitectura general
+
+- **Auth Service**: Registro y autenticación de usuarios con JWT
+- **Billing Service**: Gestión de facturas, clientes y productos (en desarrollo)
+- **API Gateway**: Entrada central para las peticiones, responsable de validar JWT
+- **Frontend**: Angular + Bootstrap (pendiente, sustituible por Thymeleaf si hay poco tiempo)
+
+---
+
+##  Tecnologías utilizadas
+
+- **Java 17**, **Spring Boot 3.1.5**
+- **Spring Security + JWT**
+- **Spring Cloud Gateway (reactivo)**
+- **Spring Data JPA + PostgreSQL**
+- **Maven** para gestión de dependencias
+- **Trello** para gestión del proyecto
+- **Swagger** para documentación (pendiente de integrar)
+- **Git + GitHub** para control de versiones
+
+---
+
+##  Autenticación
+
+- El sistema de login devuelve un token JWT
+- Las rutas del `billing-service` están protegidas por el `api-gateway`
+- Se valida el JWT directamente en el gateway usando un filtro reactivo personalizado
+- El token se debe incluir en el header:
+
+
+Desde la terminal, ejecuta el siguiente comando (requiere el usuario postgres):
+``` psql -U postgres -f scripts/init-db.sql
+```
+>>>>>>> feature/billing-service

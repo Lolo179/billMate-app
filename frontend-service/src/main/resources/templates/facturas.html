@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head"></head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="fragments/navbar :: navbar"></div>
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content-wrapper">
+        <section class="content pt-4">
+            <div class="container-fluid">
+                <h1 class="mb-4">Bienvenido al Panel</h1>
+
+                <div class="container mt-4">
+                    <h2>🧾 Lista de Facturas</h2>
+
+                    <form class="form-inline mb-3">
+                        <input type="text" id="busqueda" class="form-control mr-2"
+                               placeholder="Buscar por referencia...">
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </form>
+
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th>Referencia</th>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th>Importe</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody id="facturas-table">
+                        <!-- JS -->
+                        </tbody>
+                    </table>
+                    <div class="d-flex justify-content-center mt-3">
+                        <nav>
+                            <ul class="pagination" id="paginacion">
+                                <!-- JS genera los botones -->
+                            </ul>
+                        </nav>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+</div>
+
+<!-- JS -->
+<script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+<script th:src="@{/plugins/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/dist/js/adminlte.min.js}"></script>
+<script th:src="@{/js/facturas.js}"></script>
+
+</body>
+</html>

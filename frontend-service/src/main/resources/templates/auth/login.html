@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar sesión - BillMate</title>
+    <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <link rel="stylesheet" href="/dist/css/adminlte.min.css">
+</head>
+<body class="hold-transition login-page">
+<div class="login-box">
+    <div class="card card-outline card-primary">
+        <div class="card-header text-center">
+            <b>BillMate</b> Login
+        </div>
+        <div class="card-body">
+            <p class="login-box-msg">Introduce tus credenciales</p>
+            <form id="loginForm">
+                <div class="input-group mb-3">
+                    <input type="email" id="email" class="form-control" placeholder="Email" required>
+                    <div class="input-group-append">
+                        <div class="input-group-text"><span class="fas fa-envelope"></span></div>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="password" id="password" class="form-control" placeholder="Contraseña" required>
+                    <div class="input-group-append">
+                        <div class="input-group-text"><span class="fas fa-lock"></span></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-block">Iniciar sesión</button>
+                    </div>
+                </div>
+            </form>
+            <div id="error-msg" class="text-danger mt-3" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/auth/login.js}"></script>
+</body>
+</html>

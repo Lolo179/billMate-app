@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head"></head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="fragments/navbar :: navbar"></div>
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content-wrapper">
+        <section class="content pt-4">
+            <div class="container-fluid">
+                <h1 class="mb-4">Bienvenido al Panel</h1>
+
+                <div class="container mt-4">
+                    <h2>📋 Lista de Clientes</h2>
+                    <input type="text" id="cliente-filter" class="form-control mb-3" placeholder="🔍 Buscar cliente por nombre...">
+                    <div class="d-flex justify-content-between mb-3">
+                        <h3 class="card-title">Listado de Clientes</h3>
+                        <a href="/clientes/nuevo" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Agregar Cliente
+                        </a>
+                    </div>
+                    <table class="table table-striped" id="clientes-table">
+                        <thead class="thead-dark">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>NIF</th>
+                            <th>Dirección</th>
+                            <th>Creado</th>
+                        </tr>
+                        </thead>
+                        <tbody id="clientes-body">
+                        <!-- Cargado dinámicamente con JS -->
+                        </tbody>
+                    </table>
+                    <div class="d-flex justify-content-center mt-3">
+                        <nav>
+                            <ul class="pagination" id="paginacion-clientes">
+                                <!-- Se rellena por JS -->
+                            </ul>
+                        </nav>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <!-- Modal de detalles -->
+    <div class="modal fade" id="clienteModal" tabindex="-1" role="dialog" aria-labelledby="clienteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+                <!-- Encabezado -->
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="clienteModalLabel">👤 Detalles del Cliente</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <!-- Cuerpo -->
+                <div class="modal-body">
+                    <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
+                    <p><strong>Email:</strong> <span id="clienteEmail"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="clienteTelefono"></span></p>
+                    <p><strong>NIF:</strong> <span id="clienteNif"></span></p>
+                    <p><strong>Dirección:</strong> <span id="clienteDireccion"></span></p>
+                </div>
+
+                <!-- Pie -->
+                <div class="modal-footer d-flex justify-content-between">
+                    <button class="btn btn-outline-secondary" data-dismiss="modal">❌ Cerrar</button>
+
+                    <div>
+                        <button class="btn btn-outline-info mr-2" id="btnVerFacturas">🧾 Ver Facturas</button>
+                        <button class="btn btn-outline-success" id="btnNuevaFactura">➕ Nueva Factura</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- JS -->
+<script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+<script th:src="@{/plugins/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/dist/js/adminlte.min.js}"></script>
+<script th:src="@{/js/clientes.js}"></script>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "id": "billmate-dynamic-env",
+  "name": "BillMate-Dynamic-Env",
+  "values": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8080",
+      "enabled": true
+    },
+    {
+      "key": "TOKEN",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "CLIENT_ID",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "INVOICE_ID",
+      "value": "",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2025-06-09T20:45:00Z",
+  "_postman_exported_using": "Postman"
+}

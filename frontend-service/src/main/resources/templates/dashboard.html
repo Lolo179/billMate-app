@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head"></head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="fragments/navbar :: navbar"></div>
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="content-wrapper">
+        <section class="content pt-4">
+            <div class="container-fluid">
+                <h1 class="mb-4">Bienvenido a BillMate</h1>
+
+                <div class="row">
+                    <!-- Total Clientes -->
+                    <div class="col-lg-4 col-6">
+                        <div class="small-box bg-info">
+                            <div class="inner">
+                                <h3 id="total-clientes">0</h3>
+                                <p>Clientes registrados</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Facturas -->
+                    <div class="col-lg-4 col-6">
+                        <div class="small-box bg-success">
+                            <div class="inner">
+                                <h3 id="total-facturas">0</h3>
+                                <p>Facturas emitidas</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Facturado -->
+                    <div class="col-lg-4 col-6">
+                        <div class="small-box bg-warning">
+                            <div class="inner">
+                                <h3 id="total-euros">0 €</h3>
+                                <p>Total facturado</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-euro-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+</div>
+
+<!-- JS -->
+<script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+<script th:src="@{/plugins/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/dist/js/adminlte.min.js}"></script>
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

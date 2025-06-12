@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.util.List;
 
 @Component
 public class JwtUtil {
@@ -28,7 +29,7 @@ public class JwtUtil {
 
     public boolean isTokenValid(String token) {
         try {
-            extractClaims(token); // solo esto ya lanza excepción si está mal
+            extractClaims(token);
             return true;
         } catch (Exception e) {
             return false;
@@ -37,5 +38,17 @@ public class JwtUtil {
 
     public String extractEmail(String token) {
         return extractClaims(token).getSubject();
+    }
+
+    public List<String> extractRoles(String token) {
+
+        Claims claims = extractClaims(token);
+        Object rolesObject = claims.get("roles");
+        if (rolesObject instanceof List<?>) {
+            return ((List<?>) rolesObject).stream()
+                    .map(Object::toString)
+                    .toList();
+        }
+        return List.of();
     }
 }
