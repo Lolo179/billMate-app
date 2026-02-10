@@ -3,7 +3,6 @@ package com.billMate.auth.repository;
 import com.billMate.auth.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 
 
