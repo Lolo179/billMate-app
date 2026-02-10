@@ -5,6 +5,8 @@ import com.billMate.auth.model.User;
 import com.billMate.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -17,8 +19,8 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Override
-    public void run(String... args) throws Exception {
+    @EventListener(ApplicationReadyEvent.class)
+    public void seedAfterStartup() {
         if (userRepository.existsByEmail("admin@mail.com")) return;
 
         User user = User.builder()
@@ -29,6 +31,11 @@ public class DataSeeder implements CommandLineRunner {
                 .build();
 
         userRepository.save(user);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        // no-op kept for compatibility
     }
 }
 
