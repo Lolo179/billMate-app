@@ -1,7 +1,5 @@
 package com.billMate.billing.service;
 
-import com.billMate.billing.BillServiceApplication;
-import com.billMate.billing.TestBillingAplication;
 import com.billMate.billing.model.ClientDTO;
 import com.billMate.billing.model.NewClientDTO;
 import jakarta.persistence.EntityNotFoundException;
@@ -10,15 +8,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpringBootTest( classes = BillServiceApplication.class)
+@SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
-@TestPropertySource(locations = "classpath:application-test.yaml")
+@ActiveProfiles("test")
 @Transactional
 public class ClientServiceIntegrationTest {
 

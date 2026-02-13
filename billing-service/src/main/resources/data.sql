@@ -1,4 +1,23 @@
+-- =============================================================================
+-- DATOS DE PRUEBA PARA BILLING SERVICE
+-- =============================================================================
+-- Este script se ejecuta automáticamente al iniciar el servicio
+-- Limpia y recarga los datos de prueba
+-- =============================================================================
+
+-- Limpiar tablas en orden correcto (respetando foreign keys)
+TRUNCATE TABLE invoice_lines CASCADE;
+TRUNCATE TABLE invoices CASCADE;
+TRUNCATE TABLE clients CASCADE;
+
+-- Reiniciar secuencias
+ALTER SEQUENCE clients_client_id_seq RESTART WITH 1;
+ALTER SEQUENCE invoices_invoice_id_seq RESTART WITH 1;
+ALTER SEQUENCE invoice_lines_id_seq RESTART WITH 1;
+
+-- =============================================================================
 -- CLIENTES
+-- =============================================================================
 INSERT INTO clients (name, email, nif, address, phone, created_at) VALUES
 ('Cliente 01', 'cliente01@mail.com', '00000001A', 'Calle 1', '+34 600 000 001', CURRENT_TIMESTAMP),
 ('Cliente 02', 'cliente02@mail.com', '00000002A', 'Calle 2', '+34 600 000 002', CURRENT_TIMESTAMP),
@@ -27,9 +46,12 @@ INSERT INTO clients (name, email, nif, address, phone, created_at) VALUES
 ('Cliente 25', 'cliente25@mail.com', '00000025A', 'Calle 25', '+34 600 000 025', CURRENT_TIMESTAMP);
 
 
+-- =============================================================================
 -- FACTURAS (75 facturas aprox., 3 por cliente)
--- Generadas de forma predecible para testing
+-- =============================================================================
+-- Generadas con variedad de estados: DRAFT, SENT, PAID
 -- Los IDs de cliente van del 1 al 25
+-- =============================================================================
 INSERT INTO invoices (client_id, date, status, description, total, tax_percentage, created_at) VALUES
 -- Cliente 1
 (1, CURRENT_DATE, 'DRAFT', 'Servicio 1', 100.00, 21.00, CURRENT_TIMESTAMP),
@@ -89,6 +111,12 @@ INSERT INTO invoices (client_id, date, status, description, total, tax_percentag
 
 (24, CURRENT_DATE, 'PAID', 'Integración API', 290.00, 21.00, CURRENT_TIMESTAMP),
 (25, CURRENT_DATE, 'DRAFT', 'Diseño interfaz', 190.00, 21.00, CURRENT_TIMESTAMP);
+
+-- =============================================================================
+-- LÍNEAS DE FACTURA
+-- =============================================================================
+-- Detalle de productos/servicios para cada factura
+-- =============================================================================
 
 -- Líneas para Factura 1 (100 €)
 INSERT INTO invoice_lines (invoice_id, description, quantity, unit_price, total) VALUES

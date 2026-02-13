@@ -9,20 +9,15 @@ spring:
     name: auth
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/billmate_app
-    username: admin
-    password: admin123
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/auth_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:admin123}
     driver-class-name: org.postgresql.Driver
 
-  sql:
-    init:
-      mode: always
-      encoding: UTF-8
-
   jpa:
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
