@@ -660,6 +660,12 @@ components:
           type: string
           minLength: 5
           example: "Calle Falsa 123, Madrid"
+      example:
+        name: "Juan Pérez"
+        email: "juanperez@mail.com"
+        phone: "+34 600 123 456"
+        nif: "12345678Z"
+        address: "Calle Falsa 123, Madrid"
 
     ClientDTO:
       allOf:
@@ -678,6 +684,7 @@ components:
               example: "2025-05-15T14:30:00Z"
       example:
         clientId: 1
+        userId: 1
         name: "Juan Pérez"
         email: "juanperez@mail.com"
         phone: "+34 600 123 456"

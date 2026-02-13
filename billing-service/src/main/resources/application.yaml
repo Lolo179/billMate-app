@@ -6,9 +6,9 @@ spring:
     name: billing
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/billmate_app
-    username: admin
-    password: admin123
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/billing_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:admin123}
     driver-class-name: org.postgresql.Driver
 
   sql:
@@ -19,7 +19,7 @@ spring:
   jpa:
     defer-datasource-initialization: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
