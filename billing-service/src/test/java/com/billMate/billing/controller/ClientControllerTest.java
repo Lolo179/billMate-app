@@ -1,8 +1,6 @@
 package com.billMate.billing.controller;
 
-import com.billMate.billing.TestBillingAplication;
 import com.billMate.billing.exception.ErrorMessages;
-import com.billMate.billing.exception.GlobalExceptionHandler;
 import com.billMate.billing.model.ClientDTO;
 import com.billMate.billing.model.NewClientDTO;
 import com.billMate.billing.service.ClientService;
@@ -11,23 +9,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = ClientController.class)
-@Import(GlobalExceptionHandler.class)
-@ContextConfiguration(classes = TestBillingAplication.class)
 public class ClientControllerTest {
 
     @Autowired
@@ -37,11 +29,15 @@ public class ClientControllerTest {
     private ClientService clientService;
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void givenExistingClientId_whenGetClientById_thenReturnClientAndStatus200() throws Exception {
 
         //Given
-        ClientDTO mockClient = new ClientDTO("Luis Alvarado", "luis@gmail.com", "51246869s", "calle falsa 123", 1L);
+        ClientDTO mockClient = new ClientDTO();
+        mockClient.setName("Luis Alvarado");
+        mockClient.setEmail("luis@gmail.com");
+        mockClient.setNif("51246869s");
+        mockClient.setAddress("calle falsa 123");
+        mockClient.setClientId(1L);
         when(clientService.getClientById(1L)).thenReturn(mockClient);
 
         //When & then
@@ -53,7 +49,6 @@ public class ClientControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void givenInvalidClientId_whenGetClientById_thenReturns404WithJson() throws Exception {
 
         // Given
@@ -70,18 +65,21 @@ public class ClientControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void givenValidClient_whenPostClient_thenReturns201() throws Exception {
 
         // Given
         NewClientDTO input = new NewClientDTO("Ana Torres", "ana@example.com", "12345678X", "Calle Real 123");
-        ClientDTO created = new ClientDTO("Ana Torres", "ana@example.com", "12345678X", "Calle Real 123", 10L);
+        ClientDTO created = new ClientDTO();
+        created.setName("Ana Torres");
+        created.setEmail("ana@example.com");
+        created.setNif("12345678X");
+        created.setAddress("Calle Real 123");
+        created.setClientId(10L);
 
         when(clientService.createClient(any(NewClientDTO.class))).thenReturn(created);
 
         // When & Then
         mockMvc.perform(post("/clients")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                 {
@@ -98,18 +96,21 @@ public class ClientControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void givenValidUpdate_whenPutClient_thenReturns200AndUpdatedClient() throws Exception {
         // Given
         Long clientId = 1L;
         NewClientDTO updateDTO = new NewClientDTO("Luis Modificado", "luis_mod@example.com", "87654321Z", "Nueva Calle 456");
-        ClientDTO updatedClient = new ClientDTO("Luis Modificado", "luis_mod@example.com", "87654321Z", "Nueva Calle 456", clientId);
+        ClientDTO updatedClient = new ClientDTO();
+        updatedClient.setClientId(clientId);
+        updatedClient.setName("Luis Modificado");
+        updatedClient.setEmail("luis_mod@example.com");
+        updatedClient.setNif("87654321Z");
+        updatedClient.setAddress("Nueva Calle 456");
 
         when(clientService.updateClient(eq(clientId), any(NewClientDTO.class))).thenReturn(updatedClient);
 
         // When & Then
         mockMvc.perform(put("/clients/{clientId}", clientId)
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                 {
@@ -126,7 +127,6 @@ public class ClientControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void givenNonexistentClientId_whenPutClient_thenReturns404() throws Exception {
         // Given
         Long clientId = 999L;
@@ -135,7 +135,6 @@ public class ClientControllerTest {
 
         // When & Then
         mockMvc.perform(put("/clients/{clientId}", clientId)
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                 {
@@ -152,7 +151,6 @@ public class ClientControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void givenExistingClientId_whenDeleteClient_thenReturns204() throws Exception {
         // Given
         Long clientId = 1L;
@@ -161,13 +159,11 @@ public class ClientControllerTest {
         doNothing().when(clientService).deleteClient(clientId);
 
         // When & Then
-        mockMvc.perform(delete("/clients/{id}", clientId)
-                        .with(csrf()))
+        mockMvc.perform(delete("/clients/{clientId}", clientId))
                 .andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void givenNonexistentClientId_whenDeleteClient_thenReturns404() throws Exception {
         // Given
         Long clientId = 999L;
@@ -175,8 +171,7 @@ public class ClientControllerTest {
                 .when(clientService).deleteClient(clientId);
 
         // When & Then
-        mockMvc.perform(delete("/clients/{id}", clientId)
-                        .with(csrf()))
+        mockMvc.perform(delete("/clients/{clientId}", clientId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value(ErrorMessages.RESOURCE_NOT_FOUND))
@@ -184,10 +179,8 @@ public class ClientControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void givenInvalidClient_whenPostClient_thenReturns400() throws Exception {
         mockMvc.perform(post("/clients")
-                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                 {

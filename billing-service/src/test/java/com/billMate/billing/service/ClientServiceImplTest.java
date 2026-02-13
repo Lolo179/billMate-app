@@ -1,7 +1,6 @@
 package com.billMate.billing.service;
 
 import com.billMate.billing.entity.ClientEntity;
-import com.billMate.billing.entity.InvoiceEntity;
 import com.billMate.billing.model.ClientDTO;
 import com.billMate.billing.model.NewClientDTO;
 import com.billMate.billing.repository.ClientRepository;

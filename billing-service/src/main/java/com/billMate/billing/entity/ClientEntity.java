@@ -28,7 +28,7 @@ public class ClientEntity {
     private String phone;
     private String nif;
     private String address;
-
+    
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceEntity> invoices = new ArrayList<>();
 
