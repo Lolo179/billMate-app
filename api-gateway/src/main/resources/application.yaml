@@ -2,6 +2,15 @@ server:
   port: 8080
 jwt:
   secret: gJ1yu5QC/hlLhx9d0tqZxIHH8vioFhmv9XCkUdDAX1Y=
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
 spring:
   application:
     name: api-gateway
@@ -10,22 +19,16 @@ spring:
     gateway:
       routes:
         - id: auth-service-auth
-          uri: http://auth-service:8081
+          uri: http://localhost:8081
           predicates:
             - Path=/auth/**
 
         - id: billing-service
-          uri: http://billing-service:8082
+          uri: http://localhost:8082
           predicates:
             - Path=/billing/**
           filters:
             - StripPrefix=1
-        - id: frontend-service
-          uri: http://frontend-service:8083
-          predicates:
-            - Path=/**
-          filters:
-            - StripPrefix=0
 
 
 

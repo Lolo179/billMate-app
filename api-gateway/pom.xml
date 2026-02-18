@@ -13,7 +13,7 @@
 
 	<properties>
 		<java.version>17</java.version>
-		<spring.boot.version>3.1.5</spring.boot.version>
+		<spring.boot.version>3.3.0</spring.boot.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.source>17</maven.compiler.source>
@@ -32,7 +32,7 @@
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>2022.0.4</version>
+				<version>2023.0.3</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -119,7 +119,7 @@
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-							<version>1.18.28</version>
+						<version>1.18.30</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
