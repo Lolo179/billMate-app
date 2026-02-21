@@ -1,13 +1,11 @@
 package com.billMate.billing.service;
 
+import com.billMate.billing.BillingIntegrationTestBase;
 import com.billMate.billing.model.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,11 +14,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
-@ActiveProfiles("test")
 @Transactional
-public class InvoiceServiceIntegrationTest {
+public class InvoiceServiceIntegrationTest extends BillingIntegrationTestBase {
 
     @Autowired
     private InvoiceService invoiceService;

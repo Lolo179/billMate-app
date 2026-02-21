@@ -36,6 +36,7 @@ public class AuthenticationFilter implements WebFilter {
                         path.equals("/auth/register") ||
                         path.equals("/login") ||
                         path.equals("/") ||
+                        path.startsWith("/actuator/") ||
                         path.startsWith("/facturas") ||
                         path.equals("/dashboard") ||
                         path.equals("/clientes") ||
