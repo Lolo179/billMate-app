@@ -8,7 +8,7 @@ spring:
   docker:
     compose:
       enabled: true
-      lifecycle-management: start-only
+      lifecycle-management: start-and-stop
 
   datasource:
     url: jdbc:postgresql://localhost:5433/billing_db
