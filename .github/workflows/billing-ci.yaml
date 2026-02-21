@@ -1,13 +1,13 @@
 name: Billing CI
 
-on: 
-  push:
-    branches:
-      - main
+on:
+  pull_request:
+    branches: [ develop ]
     paths:
       - 'billing-service/**'
-  pull_request:
-    branches: [ develop, main ]
+
+  push:
+    branches: [ main ]
     paths:
       - 'billing-service/**'
 jobs:
@@ -33,7 +33,7 @@ jobs:
         run: chmod +x mvnw
 
       - name: Run tests
-        run: ./mvnw clean verify
+        run: ./mvnw clean verify -Dspring.test.context.cache.maxSize=1
 
       - name: Build Docker image
         run: docker build -t billmate/billing-service:${{ github.sha }} .
