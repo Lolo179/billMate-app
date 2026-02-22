@@ -17,8 +17,8 @@ Este módulo se encarga de:
 
 ## 🧰 Stack tecnológico
 
-- Java 17
-- Spring Boot 3.1.5
+- Java 21 (LTS)
+- Spring Boot 3.3.0
 - Spring Security + JWT
 - PostgreSQL
 - Maven

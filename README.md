@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-=======
 #  BillMate
 
 **BillMate** es una aplicación de facturación para pequeños negocios, construida con arquitectura de microservicios, desarrollada como proyecto de TFG en el ciclo de DAW.
@@ -18,7 +15,7 @@
 
 ##  Tecnologías utilizadas
 
-- **Java 17**, **Spring Boot 3.1.5**
+- **Java 21 (LTS)**, **Spring Boot 3.3.0**
 - **Spring Security + JWT**
 - **Spring Cloud Gateway (reactivo)**
 - **Spring Data JPA + PostgreSQL**
@@ -40,4 +37,3 @@
 Desde la terminal, ejecuta el siguiente comando (requiere el usuario postgres):
 ``` psql -U postgres -f scripts/init-db.sql
 ```
->>>>>>> feature/billing-service
