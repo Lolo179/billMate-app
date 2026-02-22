@@ -1,13 +1,13 @@
 name: Billing CI
 
-on: 
-  push:
-    branches:
-      - main
+on:
+  pull_request:
+    branches: [ develop ]
     paths:
       - 'billing-service/**'
-  pull_request:
-    branches: [ develop, main ]
+
+  push:
+    branches: [ main ]
     paths:
       - 'billing-service/**'
 jobs:
