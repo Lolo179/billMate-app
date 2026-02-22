@@ -33,7 +33,7 @@ jobs:
         run: chmod +x mvnw
 
       - name: Run tests
-        run: ./mvnw clean verify -Dspring.test.context.cache.maxSize=1
+        run: ./mvnw clean verify
 
       - name: Build Docker image
         run: docker build -t billmate/billing-service:${{ github.sha }} .
