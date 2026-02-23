@@ -5,14 +5,25 @@ on:
     branches: [ develop ]
     paths:
       - 'billing-service/**'
+      - '.github/workflows/billing-ci.yaml'
 
   push:
     branches: [ main ]
     paths:
       - 'billing-service/**'
+      - '.github/workflows/billing-ci.yaml'
+
+concurrency:
+  group: billing-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     defaults:
       run:
@@ -21,6 +32,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -33,7 +46,19 @@ jobs:
         run: chmod +x mvnw
 
       - name: Run tests
-        run: ./mvnw clean verify -Dspring.test.context.cache.maxSize=1
+        run: ./mvnw -B -ntp clean verify -Dspring.test.context.cache.maxSize=1
+
+      - name: Set up Docker Buildx
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        run: docker build -t billmate/billing-service:${{ github.sha }} .
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./billing-service
+          file: ./billing-service/dockerfile
+          push: false
+          tags: billmate/billing-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
