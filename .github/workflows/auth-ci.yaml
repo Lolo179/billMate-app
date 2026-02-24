@@ -1,0 +1,64 @@
+name: Auth CI
+
+on:
+  pull_request:
+    branches: [ develop ]
+    paths:
+      - 'auth-service/**'
+      - '.github/workflows/auth-ci.yaml'
+
+  push:
+    branches: [ main ]
+    paths:
+      - 'auth-service/**'
+      - '.github/workflows/auth-ci.yaml'
+
+concurrency:
+  group: auth-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    defaults:
+      run:
+        working-directory: auth-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      - name: Run tests
+        run: ./mvnw -B -ntp clean verify -Dspring.test.context.cache.maxSize=1
+
+      - name: Set up Docker Buildx
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth-service
+          file: ./auth-service/dockerfile
+          push: false
+          tags: billmate/auth-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
