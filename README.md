@@ -171,15 +171,6 @@ mvn clean verify
 
 ---
 
-## 🤝 Contribución
-
-1. Crea una rama desde `develop`: `git checkout -b feat/tu-feature`
-2. Haz commits con mensajes claros
-3. Los PR a `develop` disparan automáticamente CI
-4. Los tests deben pasar antes de mergear a `main`
-
----
-
 ## 📄 Licencia
 
 Proyecto de TFG - ciclo de DAW
