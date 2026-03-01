@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  */
 @Configuration
 @EntityScan("com.billMate.billing.entity")
-@EnableJpaRepositories("com.billMate.billing.repository")
+@EnableJpaRepositories({
+        "com.billMate.billing.repository",
+        "com.billMate.billing.infrastructure.persistence.repository"
+})
 public class JpaConfiguration {
 }

@@ -1,6 +1,9 @@
 package com.billMate.billing.controller;
 
 import com.billMate.billing.api.ClientsApi;
+import com.billMate.billing.domain.model.Client;
+import com.billMate.billing.domain.port.in.CreateClientCommand;
+import com.billMate.billing.domain.port.in.CreateClientUseCase;
 import com.billMate.billing.model.ClientDTO;
 import com.billMate.billing.model.NewClientDTO;
 import com.billMate.billing.service.ClientService;
@@ -14,12 +17,20 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClientController implements ClientsApi {
 
+    private final CreateClientUseCase createClientUseCase;
     private final ClientService clientService;
 
     @Override
     public ResponseEntity<ClientDTO> createClient(NewClientDTO newClientDTO) {
-        ClientDTO saved = clientService.createClient(newClientDTO);
-        return ResponseEntity.status(201).body(saved);
+        CreateClientCommand command = new CreateClientCommand(
+                newClientDTO.getName(),
+                newClientDTO.getEmail(),
+                newClientDTO.getPhone(),
+                newClientDTO.getNif(),
+                newClientDTO.getAddress()
+        );
+        Client client = createClientUseCase.execute(command);
+        return ResponseEntity.status(201).body(toDto(client));
     }
 
     @Override
@@ -44,5 +55,17 @@ public class ClientController implements ClientsApi {
     public ResponseEntity<Void> deleteClient(Long clientId) {
         clientService.deleteClient(clientId);
         return ResponseEntity.noContent().build();
+    }
+
+    private ClientDTO toDto(Client client) {
+        ClientDTO dto = new ClientDTO();
+        dto.setClientId(client.getId());
+        dto.setName(client.getName());
+        dto.setEmail(client.getEmail());
+        dto.setPhone(client.getPhone());
+        dto.setNif(client.getNif());
+        dto.setAddress(client.getAddress());
+        dto.setCreatedAt(client.getCreatedAt());
+        return dto;
     }
 }
