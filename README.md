@@ -7,9 +7,18 @@
 ## 🏗️ Arquitectura General
 
 - **Auth Service** (Puerto 8081): Registro y autenticación de usuarios con JWT
-- **Billing Service** (Puerto 8082): Gestión de facturas, clientes y productos
+- **Billing Service** (Puerto 8082): Gestión de facturas, clientes y productos – **Arquitectura Hexagonal (Ports & Adapters)** + contract-first con OpenAPI
 - **API Gateway** (Puerto 8080): Entrada central para peticiones, validación de JWT
 - **Frontend Service** (Puerto 3000): Angular + Bootstrap
+
+### Arquitectura Hexagonal en Billing Service
+
+El servicio de facturación sigue estrictamente el patrón hexagonal:
+
+- **Dominio** puro sin dependencias a frameworks (modelos, puertos de entrada/salida, commands)
+- **Aplicación** con casos de uso que solo dependen de puertos de dominio
+- **Infraestructura** con adaptadores REST, JPA y PDF, y mappers dedicados por capa
+- Sin servicios legacy – toda la lógica fluye a través de use cases
 
 ---
 
@@ -120,10 +129,13 @@ Se han configurado workflows automáticos para cada microservicio:
 
 ```
 billMate-app/
-├── auth-service/           # Microservicio de autenticación
-├── api-gateway/            # API Gateway (enrutamiento)
-├── billing-service/        # Microservicio de facturación
-├── frontend-service/       # Aplicación frontend
+├── auth-service/           # Microservicio de autenticación (JWT)
+├── api-gateway/            # API Gateway (enrutamiento + validación JWT)
+├── billing-service/        # Microservicio de facturación (Arquitectura Hexagonal)
+│   ├── domain/             #   Modelos, puertos in/out, commands
+│   ├── application/        #   Use cases (sin deps a infraestructura)
+│   └── infrastructure/     #   Adapters REST, JPA, PDF + mappers dedicados
+├── frontend-service/       # Aplicación frontend (Angular)
 ├── scripts/                # Scripts de instalación e inicialización
 ├── .github/workflows/      # Configuración CI/CD
 │   ├── auth-ci.yaml

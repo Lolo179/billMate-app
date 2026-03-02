@@ -124,5 +124,6 @@ docker-compose up -d
 ## 📚 Referencias
 
 - [BillMate Principal README](../README.md)
+- [Billing Service](../billing-service/README.md) – Arquitectura Hexagonal + Contract-First
 - [Database Setup](../scripts/README-DATABASE.md)
 - [API Gateway](../api-gateway/README.md)
