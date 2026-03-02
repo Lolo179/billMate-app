@@ -18,7 +18,7 @@ import jakarta.annotation.Generated;
  * InvoiceLine
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-02T14:21:25.180494+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-02T21:00:08.907410500+01:00[Europe/Madrid]")
 public class InvoiceLine {
 
   private String description;
