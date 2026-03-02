@@ -1,6 +1,6 @@
 # Billing Service – BillMate
 
-Microservicio encargado de la gestión de clientes, facturas y productos dentro del sistema BillMate, implementado con arquitectura **contract-first** usando OpenAPI.
+Microservicio encargado de la gestión de clientes, facturas y productos dentro del sistema BillMate, implementado con **arquitectura hexagonal (Ports & Adapters)** y enfoque **contract-first** usando OpenAPI.
 
 ---
 
@@ -8,30 +8,128 @@ Microservicio encargado de la gestión de clientes, facturas y productos dentro 
 
 Este módulo contiene:
 
-- La lógica de negocio relacionada con facturación
+- La lógica de negocio de facturación, aislada en el dominio
+- Puertos de entrada (use cases) y salida (repository ports) bien definidos
+- Mappers dedicados por capa (REST y persistencia)
 - El contrato OpenAPI (`contract-billing.yaml`) ubicado en `contract/`
 - Generación automática de interfaces e instancias de modelo a partir del contrato
 - Endpoints REST para gestión de clientes y facturas
 
 ---
 
-## 🔧 Arquitectura Contract-First
+## 🏛️ Arquitectura Hexagonal
 
-Este proyecto sigue una arquitectura **contract-first**. A partir del contrato `contract-billing.yaml`, se generan automáticamente:
+El servicio sigue estrictamente la arquitectura hexagonal (Ports & Adapters), con una clara separación en tres capas:
 
-- Interfaces de la API (`ClientsApi`, `InvoicesApi`, etc.)
-- Clases de dominio (`Client`, `Invoice`, `InvoiceLine`, etc.)
+### Dominio (`domain/`)
 
-### 📁 Archivos Generados
+El núcleo de la aplicación, sin dependencias a frameworks ni infraestructura:
 
-Los archivos generados se encuentran en:
+- **Modelos**: `Client`, `Invoice`, `InvoiceLineItem`, `InvoiceStatus`
+- **Puertos de entrada (in)**: interfaces de casos de uso que definen las operaciones del sistema
+  - `CreateClientUseCase`, `GetClientUseCase`, `GetAllClientsUseCase`, `UpdateClientUseCase`, `DeleteClientUseCase`
+  - `CreateInvoiceUseCase`, `GetInvoiceUseCase`, `GetAllInvoicesUseCase`, `GetInvoicesByClientUseCase`, `UpdateInvoiceUseCase`, `DeleteInvoiceUseCase`, `EmitInvoiceUseCase`, `DownloadInvoicePdfUseCase`, `PayInvoiceUseCase`
+- **Commands**: `CreateClientCommand`, `UpdateClientCommand`, `CreateInvoiceCommand`, `UpdateInvoiceCommand`
+- **Puertos de salida (out)**: `ClientRepositoryPort`, `InvoiceRepositoryPort`, `PdfGeneratorPort`
+
+### Aplicación (`application/useCase/`)
+
+Implementaciones de los casos de uso, que orquestan la lógica de dominio:
+
+- `CreateClientService`, `GetClientService`, `GetAllClientsService`, `UpdateClientService`, `DeleteClientService`
+- `CreateInvoiceService`, `GetInvoiceService`, `GetAllInvoicesService`, `GetInvoicesByClientService`, `UpdateInvoiceService`, `DeleteInvoiceService`, `EmitInvoiceService`, `DownloadInvoicePdfService`, `PayInvoiceService`
+
+> Solo dependen de puertos de dominio, nunca de infraestructura.
+
+### Infraestructura (`infrastructure/`)
+
+Adaptadores que conectan el dominio con el mundo exterior:
+
+- **REST** (`rest/api/`): `ClientController`, `InvoiceController` — implementan las interfaces OpenAPI generadas
+- **Mappers REST** (`rest/mapper/`): `ClientRestMapper`, `InvoiceRestMapper` — convierten entre modelos de dominio y DTOs
+- **Persistencia** (`persistence/adapter/`): `ClientJpaAdapter`, `InvoiceJpaAdapter` — implementan los puertos de salida
+- **Mappers Persistencia** (`persistence/mapper/`): `ClientPersistenceMapper`, `InvoicePersistenceMapper` — convierten entre modelos de dominio y entidades JPA
+- **PDF** (`pdf/`): `PdfGeneratorAdapter` — implementa `PdfGeneratorPort`
+
+### Diagrama de Dependencias
 
 ```
-target/generated-sources/openapi/src/main/java/com/billMate/billing/api
-target/generated-sources/openapi/src/main/java/com/billMate/billing/model
+                    ┌──────────────────────────┐
+                    │     REST Controllers      │
+                    │  (ClientsApi, InvoicesApi) │
+                    └────────────┬─────────────┘
+                                 │ usa
+                    ┌────────────▼─────────────┐
+                    │     REST Mappers          │
+                    │ (ClientRestMapper,        │
+                    │  InvoiceRestMapper)        │
+                    └────────────┬─────────────┘
+                                 │ convierte a/desde
+          ┌──────────────────────▼──────────────────────┐
+          │              DOMINIO (núcleo)                │
+          │  Modelos: Client, Invoice, InvoiceLineItem  │
+          │  Puertos IN: *UseCase interfaces            │
+          │  Puertos OUT: *RepositoryPort, PdfPort      │
+          │  Commands: Create/Update*Command            │
+          └──────────┬──────────────────┬───────────────┘
+                     │                  │
+        ┌────────────▼──────┐  ┌────────▼──────────────┐
+        │  UseCase Services │  │ Persistence Adapters   │
+        │  (application/)   │  │ + Persistence Mappers  │
+        └───────────────────┘  └───────────────────────┘
 ```
+
+---
+
+## 🔧 Contract-First con OpenAPI
+
+A partir del contrato `contract-billing.yaml`, se generan automáticamente:
+
+- Interfaces de la API (`ClientsApi`, `InvoicesApi`)
+- DTOs (`ClientDTO`, `InvoiceDTO`, `NewClientDTO`, `NewInvoiceDTO`, `InvoiceLine`)
 
 > ⚠️ Estos archivos **no deben ser modificados manualmente** ni versionados en Git.
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+billing-service/
+├── contract/
+│   └── contract-billing.yaml          # Contrato OpenAPI
+├── src/main/java/com/billMate/billing/
+│   ├── domain/
+│   │   ├── client/
+│   │   │   ├── model/Client.java
+│   │   │   └── port/
+│   │   │       ├── in/                # Use case interfaces + Commands
+│   │   │       └── out/               # ClientRepositoryPort
+│   │   └── invoice/
+│   │       ├── model/                 # Invoice, InvoiceLineItem, InvoiceStatus
+│   │       └── port/
+│   │           ├── in/                # Use case interfaces + Commands
+│   │           └── out/               # InvoiceRepositoryPort, PdfGeneratorPort
+│   ├── application/
+│   │   └── useCase/                   # Implementaciones de use cases
+│   └── infrastructure/
+│       ├── config/                    # JpaConfiguration
+│       ├── pdf/                       # PdfGeneratorAdapter
+│       ├── persistence/
+│       │   ├── adapter/               # ClientJpaAdapter, InvoiceJpaAdapter
+│       │   ├── entity/                # ClientEntity, InvoiceEntity, InvoiceLineEntity
+│       │   ├── mapper/                # ClientPersistenceMapper, InvoicePersistenceMapper
+│       │   └── repository/            # SpringDataClientRepository, SpringDataInvoiceRepository
+│       └── rest/
+│           ├── api/                   # ClientController, InvoiceController
+│           ├── dto/                   # DTOs generados por OpenAPI
+│           ├── error/                 # GlobalExceptionHandler, ErrorMessages
+│           └── mapper/                # ClientRestMapper, InvoiceRestMapper
+└── src/test/java/com/billMate/billing/
+    ├── application/useCase/           # Tests unitarios de use cases
+    ├── domain/client/model/           # Tests de validación de dominio
+    └── infrastructure/rest/api/       # Tests de controllers
+```
 
 ---
 
@@ -42,7 +140,9 @@ target/generated-sources/openapi/src/main/java/com/billMate/billing/model
 - Spring Data JPA
 - PostgreSQL
 - OpenAPI / Swagger
+- iText (generación de PDF)
 - Maven
+- Lombok
 
 ---
 
@@ -119,10 +219,13 @@ cd billing-service
 mvn clean verify
 ```
 
-Los tests están ubicados en:
+Los tests están organizados por capa siguiendo la arquitectura hexagonal:
 
 ```
 src/test/java/com/billMate/billing/
+├── application/useCase/           # Tests unitarios de use cases
+├── domain/client/model/           # Tests de validación del modelo de dominio
+└── infrastructure/rest/api/       # Tests de controllers (MockMvc + @WebMvcTest)
 ```
 
 ---

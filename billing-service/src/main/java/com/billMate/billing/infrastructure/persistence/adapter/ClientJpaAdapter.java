@@ -3,6 +3,7 @@ package com.billMate.billing.infrastructure.persistence.adapter;
 import com.billMate.billing.domain.client.model.Client;
 import com.billMate.billing.domain.client.port.out.ClientRepositoryPort;
 import com.billMate.billing.infrastructure.persistence.entity.ClientEntity;
+import com.billMate.billing.infrastructure.persistence.mapper.ClientPersistenceMapper;
 import com.billMate.billing.infrastructure.persistence.repository.SpringDataClientRepository;
 import org.springframework.stereotype.Component;
 
@@ -14,28 +15,31 @@ import java.util.stream.Collectors;
 public class ClientJpaAdapter implements ClientRepositoryPort {
 
     private final SpringDataClientRepository springDataClientRepository;
+    private final ClientPersistenceMapper clientPersistenceMapper;
 
-    public ClientJpaAdapter(SpringDataClientRepository springDataClientRepository) {
+    public ClientJpaAdapter(SpringDataClientRepository springDataClientRepository,
+                            ClientPersistenceMapper clientPersistenceMapper) {
         this.springDataClientRepository = springDataClientRepository;
+        this.clientPersistenceMapper = clientPersistenceMapper;
     }
 
     @Override
     public Client save(Client client) {
-        ClientEntity entity = toEntity(client);
+        ClientEntity entity = clientPersistenceMapper.toEntity(client);
         ClientEntity saved = springDataClientRepository.save(entity);
-        return toDomain(saved);
+        return clientPersistenceMapper.toDomain(saved);
     }
 
     @Override
     public Optional<Client> findById(Long id) {
-        return springDataClientRepository.findById(id).map(this::toDomain);
+        return springDataClientRepository.findById(id).map(clientPersistenceMapper::toDomain);
     }
 
     @Override
     public List<Client> findAll() {
         return springDataClientRepository.findAll()
                 .stream()
-                .map(this::toDomain)
+                .map(clientPersistenceMapper::toDomain)
                 .collect(Collectors.toList());
     }
 
@@ -47,29 +51,5 @@ public class ClientJpaAdapter implements ClientRepositoryPort {
     @Override
     public boolean existsById(Long id) {
         return springDataClientRepository.existsById(id);
-    }
-
-    private ClientEntity toEntity(Client client) {
-        return ClientEntity.builder()
-                .id(client.getId())
-                .name(client.getName())
-                .email(client.getEmail())
-                .phone(client.getPhone())
-                .nif(client.getNif())
-                .address(client.getAddress())
-                .createdAt(client.getCreatedAt())
-                .build();
-    }
-
-    private Client toDomain(ClientEntity entity) {
-        return new Client(
-                entity.getId(),
-                entity.getName(),
-                entity.getEmail(),
-                entity.getPhone(),
-                entity.getNif(),
-                entity.getAddress(),
-                entity.getCreatedAt()
-        );
     }
 }

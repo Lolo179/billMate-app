@@ -1,13 +1,11 @@
 package com.billMate.billing.infrastructure.rest.api;
 
 import com.billMate.billing.domain.client.model.Client;
-import com.billMate.billing.domain.client.port.in.CreateClientCommand;
-import com.billMate.billing.domain.client.port.in.CreateClientUseCase;
-import com.billMate.billing.domain.client.port.in.GetClientUseCase;
+import com.billMate.billing.domain.client.port.in.*;
 import com.billMate.billing.infrastructure.rest.error.ErrorMessages;
 import com.billMate.billing.infrastructure.rest.dto.ClientDTO;
 import com.billMate.billing.infrastructure.rest.dto.NewClientDTO;
-import com.billMate.billing.application.service.ClientService;
+import com.billMate.billing.infrastructure.rest.mapper.ClientRestMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,7 +37,16 @@ public class ClientControllerTest {
     private GetClientUseCase getClientUseCase;
 
     @MockBean
-    private ClientService clientService;
+    private GetAllClientsUseCase getAllClientsUseCase;
+
+    @MockBean
+    private UpdateClientUseCase updateClientUseCase;
+
+    @MockBean
+    private DeleteClientUseCase deleteClientUseCase;
+
+    @MockBean
+    private ClientRestMapper clientRestMapper;
 
     @Test
     void givenExistingClientId_whenGetClientById_thenReturnClientAndStatus200() throws Exception {
@@ -46,6 +54,13 @@ public class ClientControllerTest {
         //Given
         Client mockClient = new Client(1L, "Luis Alvarado", "luis@gmail.com", null, "51246869s", "calle falsa 123", OffsetDateTime.now());
         when(getClientUseCase.execute(1L)).thenReturn(mockClient);
+
+        ClientDTO mockDto = new ClientDTO();
+        mockDto.setClientId(1L);
+        mockDto.setName("Luis Alvarado");
+        mockDto.setEmail("luis@gmail.com");
+        mockDto.setNif("51246869s");
+        when(clientRestMapper.toDto(mockClient)).thenReturn(mockDto);
 
         //When & then
         mockMvc.perform(get("/clients/1"))
@@ -76,7 +91,15 @@ public class ClientControllerTest {
 
         // Given
         Client createdClient = new Client(10L, "Ana Torres", "ana@example.com", null, "12345678X", "Calle Real 123", OffsetDateTime.now());
+        when(clientRestMapper.toCreateCommand(any(NewClientDTO.class)))
+                .thenReturn(new CreateClientCommand("Ana Torres", "ana@example.com", null, "12345678X", "Calle Real 123"));
         when(createClientUseCase.execute(any(CreateClientCommand.class))).thenReturn(createdClient);
+
+        ClientDTO createdDto = new ClientDTO();
+        createdDto.setClientId(10L);
+        createdDto.setName("Ana Torres");
+        createdDto.setEmail("ana@example.com");
+        when(clientRestMapper.toDto(createdClient)).thenReturn(createdDto);
 
         // When & Then
         mockMvc.perform(post("/clients")
@@ -99,15 +122,19 @@ public class ClientControllerTest {
     void givenValidUpdate_whenPutClient_thenReturns200AndUpdatedClient() throws Exception {
         // Given
         Long clientId = 1L;
-        NewClientDTO updateDTO = new NewClientDTO("Luis Modificado", "luis_mod@example.com", "87654321Z", "Nueva Calle 456");
-        ClientDTO updatedClient = new ClientDTO();
-        updatedClient.setClientId(clientId);
-        updatedClient.setName("Luis Modificado");
-        updatedClient.setEmail("luis_mod@example.com");
-        updatedClient.setNif("87654321Z");
-        updatedClient.setAddress("Nueva Calle 456");
+        Client updatedDomain = new Client(clientId, "Luis Modificado", "luis_mod@example.com", null, "87654321Z", "Nueva Calle 456", OffsetDateTime.now());
 
-        when(clientService.updateClient(eq(clientId), any(NewClientDTO.class))).thenReturn(updatedClient);
+        when(clientRestMapper.toUpdateCommand(eq(clientId), any(NewClientDTO.class)))
+                .thenReturn(new UpdateClientCommand(clientId, "Luis Modificado", "luis_mod@example.com", null, "87654321Z", "Nueva Calle 456"));
+        when(updateClientUseCase.execute(any(UpdateClientCommand.class))).thenReturn(updatedDomain);
+
+        ClientDTO updatedDto = new ClientDTO();
+        updatedDto.setClientId(clientId);
+        updatedDto.setName("Luis Modificado");
+        updatedDto.setEmail("luis_mod@example.com");
+        updatedDto.setNif("87654321Z");
+        updatedDto.setAddress("Nueva Calle 456");
+        when(clientRestMapper.toDto(updatedDomain)).thenReturn(updatedDto);
 
         // When & Then
         mockMvc.perform(put("/clients/{clientId}", clientId)
@@ -130,7 +157,9 @@ public class ClientControllerTest {
     void givenNonexistentClientId_whenPutClient_thenReturns404() throws Exception {
         // Given
         Long clientId = 999L;
-        when(clientService.updateClient(eq(clientId), any(NewClientDTO.class)))
+        when(clientRestMapper.toUpdateCommand(eq(clientId), any(NewClientDTO.class)))
+                .thenReturn(new UpdateClientCommand(clientId, "Nombre", "correo@example.com", null, "11111111A", "Dirección"));
+        when(updateClientUseCase.execute(any(UpdateClientCommand.class)))
                 .thenThrow(new EntityNotFoundException("ID 999 no encontrado"));
 
         // When & Then
@@ -155,8 +184,7 @@ public class ClientControllerTest {
         // Given
         Long clientId = 1L;
 
-        // No hace falta stub si el método es void
-        doNothing().when(clientService).deleteClient(clientId);
+        doNothing().when(deleteClientUseCase).execute(clientId);
 
         // When & Then
         mockMvc.perform(delete("/clients/{clientId}", clientId))
@@ -168,7 +196,7 @@ public class ClientControllerTest {
         // Given
         Long clientId = 999L;
         doThrow(new EntityNotFoundException("ID 999 no encontrado"))
-                .when(clientService).deleteClient(clientId);
+                .when(deleteClientUseCase).execute(clientId);
 
         // When & Then
         mockMvc.perform(delete("/clients/{clientId}", clientId))

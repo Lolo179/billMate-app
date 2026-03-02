@@ -20,7 +20,7 @@ import jakarta.annotation.Generated;
  * ClientDTO
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-02T01:11:33.737203500+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-02T14:05:51.176767+01:00[Europe/Madrid]")
 public class ClientDTO {
 
   private String name;
