@@ -6,7 +6,6 @@ import com.billMate.billing.domain.invoice.port.out.InvoiceRepositoryPort;
 import com.billMate.billing.infrastructure.persistence.entity.InvoiceEntity;
 import com.billMate.billing.infrastructure.persistence.entity.InvoiceLineEntity;
 import com.billMate.billing.infrastructure.persistence.mapper.InvoicePersistenceMapper;
-import com.billMate.billing.infrastructure.persistence.repository.SpringDataClientRepository;
 import com.billMate.billing.infrastructure.persistence.repository.SpringDataInvoiceRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,14 +18,11 @@ import java.util.stream.Collectors;
 public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
 
     private final SpringDataInvoiceRepository springDataInvoiceRepository;
-    private final SpringDataClientRepository springDataClientRepository;
     private final InvoicePersistenceMapper invoicePersistenceMapper;
 
     public InvoiceJpaAdapter(SpringDataInvoiceRepository springDataInvoiceRepository,
-                             SpringDataClientRepository springDataClientRepository,
                              InvoicePersistenceMapper invoicePersistenceMapper) {
         this.springDataInvoiceRepository = springDataInvoiceRepository;
-        this.springDataClientRepository = springDataClientRepository;
         this.invoicePersistenceMapper = invoicePersistenceMapper;
     }
 
@@ -39,7 +35,7 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
             entity = springDataInvoiceRepository.findByIdWithLines(invoice.getId())
                     .orElseThrow(() -> new RuntimeException("Invoice not found for update: " + invoice.getId()));
 
-            entity.setClient(springDataClientRepository.getReferenceById(invoice.getClientId()));
+            entity.setClientId(invoice.getClientId());
             entity.setDate(invoice.getDate());
             entity.setStatus(invoice.getStatus());
             entity.setDescription(invoice.getDescription());
@@ -81,7 +77,7 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
 
     @Override
     public List<Invoice> findAllByClientId(Long clientId) {
-        return springDataInvoiceRepository.findAllByClient_Id(clientId).stream()
+        return springDataInvoiceRepository.findAllByClientId(clientId).stream()
                 .map(invoicePersistenceMapper::toDomain)
                 .collect(Collectors.toList());
     }

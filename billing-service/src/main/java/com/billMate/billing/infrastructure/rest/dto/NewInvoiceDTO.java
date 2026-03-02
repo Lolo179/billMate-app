@@ -25,7 +25,7 @@ import jakarta.annotation.Generated;
  * NewInvoiceDTO
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-02T14:05:51.176767+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-02T14:21:25.180494+01:00[Europe/Madrid]")
 public class NewInvoiceDTO {
 
   private Long clientId;

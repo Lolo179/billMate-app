@@ -25,9 +25,8 @@ public class InvoiceEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long invoiceId;
 
-    @ManyToOne(fetch = FetchType.LAZY,optional = false)
-    @JoinColumn(name = "client_id",nullable = false)
-    private ClientEntity client;
+    @Column(name = "client_id", nullable = false)
+    private Long clientId;
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceLineEntity> invoiceLines = new ArrayList<>();

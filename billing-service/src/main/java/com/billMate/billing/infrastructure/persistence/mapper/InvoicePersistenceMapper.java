@@ -4,7 +4,6 @@ import com.billMate.billing.domain.invoice.model.Invoice;
 import com.billMate.billing.domain.invoice.model.InvoiceLineItem;
 import com.billMate.billing.infrastructure.persistence.entity.InvoiceEntity;
 import com.billMate.billing.infrastructure.persistence.entity.InvoiceLineEntity;
-import com.billMate.billing.infrastructure.persistence.repository.SpringDataClientRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -12,12 +11,6 @@ import java.util.stream.Collectors;
 
 @Component
 public class InvoicePersistenceMapper {
-
-    private final SpringDataClientRepository springDataClientRepository;
-
-    public InvoicePersistenceMapper(SpringDataClientRepository springDataClientRepository) {
-        this.springDataClientRepository = springDataClientRepository;
-    }
 
     public InvoiceEntity toNewEntity(Invoice invoice) {
         List<InvoiceLineEntity> lineEntities = invoice.getLines().stream()
@@ -30,7 +23,7 @@ public class InvoicePersistenceMapper {
                 .collect(Collectors.toList());
 
         return InvoiceEntity.builder()
-                .client(springDataClientRepository.getReferenceById(invoice.getClientId()))
+                .clientId(invoice.getClientId())
                 .invoiceLines(lineEntities)
                 .date(invoice.getDate())
                 .status(invoice.getStatus())
@@ -53,7 +46,7 @@ public class InvoicePersistenceMapper {
 
         return new Invoice(
                 entity.getInvoiceId(),
-                entity.getClient().getId(),
+                entity.getClientId(),
                 lines,
                 entity.getDate(),
                 entity.getStatus(),
