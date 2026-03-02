@@ -186,8 +186,10 @@
                         <configuration>
                             <target>
                                 <echo>Borrando API generada...</echo>
-                                <delete dir="${project.basedir}/src/main/java/com/billMate/billing/api"/>
-                                <delete dir="${project.basedir}/src/main/java/com/billMate/billing/model"/>
+                                <delete file="${project.basedir}/src/main/java/com/billMate/billing/infrastructure/rest/api/ClientsApi.java"/>
+                                <delete file="${project.basedir}/src/main/java/com/billMate/billing/infrastructure/rest/api/InvoicesApi.java"/>
+                                <delete file="${project.basedir}/src/main/java/com/billMate/billing/infrastructure/rest/api/ApiUtil.java"/>
+                                <delete dir="${project.basedir}/src/main/java/com/billMate/billing/infrastructure/rest/dto"/>
                             </target>
                         </configuration>
                     </execution>
@@ -208,8 +210,8 @@
                             <inputSpec>${project.basedir}/contract/contract-billing.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <output>${project.basedir}</output>
-                            <apiPackage>com.billMate.billing.api</apiPackage>
-                            <modelPackage>com.billMate.billing.model</modelPackage>
+                            <apiPackage>com.billMate.billing.infrastructure.rest.api</apiPackage>
+                            <modelPackage>com.billMate.billing.infrastructure.rest.dto</modelPackage>
                             <invokerPackage>com.billMate.billing.invoker</invokerPackage>
                             <configOptions>
                                 <interfaceOnly>true</interfaceOnly>

@@ -1,8 +1,8 @@
 package com.billMate.billing.application.useCase;
 
-import com.billMate.billing.domain.model.Client;
-import com.billMate.billing.domain.port.in.CreateClientCommand;
-import com.billMate.billing.domain.port.out.ClientRepositoryPort;
+import com.billMate.billing.domain.client.model.Client;
+import com.billMate.billing.domain.client.port.in.CreateClientCommand;
+import com.billMate.billing.domain.client.port.out.ClientRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
