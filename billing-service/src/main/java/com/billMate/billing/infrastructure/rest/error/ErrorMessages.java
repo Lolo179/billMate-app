@@ -8,5 +8,6 @@ public class ErrorMessages {
     public static final String CONSTRAINT_VIOLATION = "Violaciones de restricciones en los datos de entrada.";
     public static final String INVALID_JSON = "Formato JSON inválido o mal formado.";
     public static final String UNEXPECTED_ERROR = "Ha ocurrido un error inesperado en el servidor.";
+    public static final String DATA_INTEGRITY_VIOLATION = "No se puede completar la operación porque existen datos relacionados.";
 }
 

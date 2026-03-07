@@ -35,3 +35,6 @@ build/
 
 Desktop/
 auth-service/auth-run.log
+
+### Logs ###
+logs/*.log

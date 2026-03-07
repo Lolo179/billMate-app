@@ -9,6 +9,8 @@ import com.billMate.billing.domain.client.port.out.ClientRepositoryPort;
 import com.billMate.billing.domain.invoice.port.out.InvoiceRepositoryPort;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,9 +18,12 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Service
 public class UpdateInvoiceService implements UpdateInvoiceUseCase {
 
+    private static final Logger log = LoggerFactory.getLogger(UpdateInvoiceService.class);
     private final InvoiceRepositoryPort invoiceRepositoryPort;
     private final ClientRepositoryPort clientRepositoryPort;
 
@@ -30,11 +35,18 @@ public class UpdateInvoiceService implements UpdateInvoiceUseCase {
 
     @Override
     public Invoice execute(UpdateInvoiceCommand command) {
+        log.info("Updating invoice", kv("invoiceId", command.invoiceId()));
         Invoice invoice = invoiceRepositoryPort.findById(command.invoiceId())
-                .orElseThrow(() -> new EntityNotFoundException("Factura no encontrada"));
+                .orElseThrow(() -> {
+                    log.warn("Invoice not found", kv("invoiceId", command.invoiceId()));
+                    return new EntityNotFoundException("Factura no encontrada");
+                });
 
         clientRepositoryPort.findById(command.clientId())
-                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado"));
+                .orElseThrow(() -> {
+                    log.warn("Client not found", kv("clientId", command.clientId()));
+                    return new EntityNotFoundException("Cliente no encontrado");
+                });
 
         List<InvoiceLineItem> lines = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
@@ -55,6 +67,8 @@ public class UpdateInvoiceService implements UpdateInvoiceUseCase {
         invoice.setLines(lines);
         invoice.setTotal(total.setScale(2, RoundingMode.HALF_UP));
 
-        return invoiceRepositoryPort.save(invoice);
+        Invoice saved = invoiceRepositoryPort.save(invoice);
+        log.info("Invoice updated", kv("invoiceId", saved.getId()), kv("total", saved.getTotal()));
+        return saved;
     }
 }
