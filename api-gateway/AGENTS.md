@@ -48,5 +48,23 @@ Filtro `WebFilter` reactivo que intercepta TODAS las peticiones:
 - **Reactivo siempre**: usar `Mono`, `Flux`, `ServerWebExchange` — nunca APIs bloqueantes
 - `@RequiredArgsConstructor` (Lombok) permitido en filtros y config
 - `ServerHttpSecurity` (no `HttpSecurity`) para configuración de seguridad
+
+## Observabilidad
+
+### Correlation ID (`CorrelationIdFilter`)
+
+`GlobalFilter + Ordered` con `HIGHEST_PRECEDENCE`. Genera UUID en `x-Correlation-Id` si no existe, lo propaga en:
+- Request header (downstream hacia auth/billing)
+- Response header (upstream hacia el cliente)
+- MDC con clave `correlationId` (para logs)
+
+### Logging Estructurado
+
+`logback-spring.xml` con `LogstashEncoder` (JSON). Todos los logs incluyen `correlationId` automáticamente desde MDC.
+
+```java
+import static net.logstash.logback.argument.StructuredArguments.kv;
+log.debug(">> Incoming request", kv("method", method), kv("path", path));
+```
 - No hay controllers — toda la lógica es enrutamiento + filtros
 - Puerto: **8080**

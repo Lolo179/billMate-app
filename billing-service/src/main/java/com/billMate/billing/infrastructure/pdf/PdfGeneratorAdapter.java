@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Component
 @Slf4j
 public class PdfGeneratorAdapter implements PdfGeneratorPort {
@@ -69,7 +71,7 @@ public class PdfGeneratorAdapter implements PdfGeneratorPort {
             return out.toByteArray();
 
         } catch (Exception e) {
-            log.error("Error al generar PDF de factura", e);
+            log.error("Error generating invoice PDF", kv("invoiceId", invoice.getId()), e);
             throw new RuntimeException("No se pudo generar el PDF");
         }
     }

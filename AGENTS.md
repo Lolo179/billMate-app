@@ -15,7 +15,7 @@ Bases de datos: PostgreSQL 16 — `auth_db` (puerto 5434), `billing_db` (puerto 
 
 ## Stack
 
-Java 21, Spring Boot 3.3.0, Spring Cloud 2023.0.3, Spring Security + JWT (jjwt 0.11.5, HS256), Spring Data JPA + PostgreSQL 16, OpenAPI Generator 7.3.0, iTextPDF 5.5.13.3, Thymeleaf, Lombok (excepto dominio billing), Maven multi-módulo, Docker multi-stage (eclipse-temurin:21 Alpine), GitHub Actions, Testcontainers, JUnit 5 + Mockito + MockMvc.
+Java 21, Spring Boot 3.3.0, Spring Cloud 2023.0.3, Spring Security + JWT (jjwt 0.11.5, HS256), Spring Data JPA + PostgreSQL 16, OpenAPI Generator 7.3.0, iTextPDF 5.5.13.3, Thymeleaf, Lombok (excepto dominio billing), Maven multi-módulo, Docker multi-stage (eclipse-temurin:21 Alpine), GitHub Actions, Testcontainers, JUnit 5 + Mockito + MockMvc, logstash-logback-encoder 7.4 (JSON logging).
 
 ## Idioma
 
@@ -169,6 +169,43 @@ cd auth-service && mvn spring-boot:run                     # Iniciar servicio
 docker-compose -f auth-service/docker-compose.yaml up -d   # BD auth
 docker-compose -f billing-service/docker-compose.yaml up -d # BD billing
 ```
+
+## Observabilidad
+
+### Correlation ID
+
+Cada petición entrante recibe un UUID de correlación (`x-Correlation-Id`) que se propaga a través de todos los microservicios:
+
+1. **API Gateway** (`CorrelationIdFilter` — `GlobalFilter + Ordered`): genera UUID si no existe, lo inyecta en header de request (downstream) y response (upstream), y lo coloca en MDC.
+2. **Auth / Billing Services** (`CorrelationIdFilter` — `OncePerRequestFilter`): lee el header `x-Correlation-Id` del request y lo coloca en MDC para los logs del servicio.
+
+### Logging Estructurado (JSON)
+
+Todos los servicios usan **logstash-logback-encoder 7.4** para emitir logs en formato JSON con el campo `correlationId` del MDC.
+
+**Configuración:** `logback-spring.xml` con `LogstashEncoder` en cada servicio.
+
+**Patrón de logs con `StructuredArguments.kv()`:**
+
+```java
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
+// Mensajes de log en inglés, campos como kv()
+log.info("Creating client", kv("nif", command.nif()), kv("name", command.name()));
+log.debug("Querying client in DB", kv("clientId", id));
+log.warn("Client not found", kv("clientId", clientId));
+log.error("Unexpected error", kv("error", ex.getMessage()), ex);
+```
+
+**Niveles de log por capa:**
+
+| Capa | Nivel | Ejemplo |
+|---|---|---|
+| Controllers | `INFO` | Entrada/salida de endpoints (`>> POST /clients`, `<< POST /clients`) |
+| Use Cases | `INFO`/`DEBUG` | Lógica de negocio, creación/actualización de entidades |
+| Adapters (JPA) | `DEBUG` | Operaciones de persistencia |
+| Filters | `DEBUG` | Validación JWT, correlación |
+| Exception Handlers | `WARN`/`ERROR` | Errores de validación, recursos no encontrados, errores inesperados |
 
 ## Instrucciones Detalladas
 

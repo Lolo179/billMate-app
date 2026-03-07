@@ -273,3 +273,32 @@ CREATE TABLE IF NOT EXISTS invoice_lines (
 Se ejecuta en **cada arranque** (`sql.init.mode: always`). Hace `TRUNCATE` + reset de secuencias + inserta datos demo (~25 clientes, ~35 facturas). Solo en desarrollo — **nunca en tests** (`mode: never`).
 
 - Puerto: **8082**
+
+## Observabilidad
+
+### Correlation ID (`CorrelationIdFilter`)
+
+`OncePerRequestFilter` con `@Order(HIGHEST_PRECEDENCE)` en `infrastructure/filter/`. Lee `x-Correlation-Id` del header (propagado por API Gateway) y lo coloca en MDC.
+
+### Logging Estructurado
+
+`logback-spring.xml` con `LogstashEncoder` (JSON). Todos los logs incluyen `correlationId` automáticamente desde MDC.
+
+```java
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
+// Controllers (INFO): entrada/salida de endpoints
+log.info(">> POST /clients", kv("nif", newClientDTO.getNif()));
+log.info("<< POST /clients", kv("clientId", created.getClientId()));
+
+// Use Cases (INFO/DEBUG): lógica de negocio
+log.info("Creating client", kv("nif", command.nif()), kv("name", command.name()));
+log.warn("Client not found", kv("clientId", clientId));
+
+// Adapters JPA (DEBUG): operaciones de persistencia
+log.debug("Persisting client", kv("nif", client.getNif()));
+
+// Exception Handlers (WARN/ERROR)
+log.warn("Resource not found", kv("error", ex.getMessage()));
+log.error("Unexpected error", kv("error", ex.getMessage()), ex);
+```

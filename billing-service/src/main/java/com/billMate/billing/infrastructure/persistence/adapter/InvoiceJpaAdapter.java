@@ -7,6 +7,8 @@ import com.billMate.billing.infrastructure.persistence.entity.InvoiceEntity;
 import com.billMate.billing.infrastructure.persistence.entity.InvoiceLineEntity;
 import com.billMate.billing.infrastructure.persistence.mapper.InvoicePersistenceMapper;
 import com.billMate.billing.infrastructure.persistence.repository.SpringDataInvoiceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +16,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Component
 public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
 
+    private static final Logger log = LoggerFactory.getLogger(InvoiceJpaAdapter.class);
     private final SpringDataInvoiceRepository springDataInvoiceRepository;
     private final InvoicePersistenceMapper invoicePersistenceMapper;
 
@@ -29,6 +34,7 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
     @Override
     @Transactional
     public Invoice save(Invoice invoice) {
+        log.debug("Persisting invoice", kv("invoiceId", invoice.getId()));
         InvoiceEntity entity;
 
         if (invoice.getId() != null) {
@@ -60,16 +66,19 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
         }
 
         InvoiceEntity saved = springDataInvoiceRepository.save(entity);
+        log.debug("Invoice persisted", kv("invoiceId", saved.getInvoiceId()));
         return invoicePersistenceMapper.toDomain(saved);
     }
 
     @Override
     public Optional<Invoice> findById(Long id) {
+        log.debug("Querying invoice in DB", kv("invoiceId", id));
         return springDataInvoiceRepository.findByIdWithLines(id).map(invoicePersistenceMapper::toDomain);
     }
 
     @Override
     public List<Invoice> findAll() {
+        log.debug("Querying all invoices in DB");
         return springDataInvoiceRepository.findAll().stream()
                 .map(invoicePersistenceMapper::toDomain)
                 .collect(Collectors.toList());
@@ -77,6 +86,7 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
 
     @Override
     public List<Invoice> findAllByClientId(Long clientId) {
+        log.debug("Querying invoices in DB by client", kv("clientId", clientId));
         return springDataInvoiceRepository.findAllByClientId(clientId).stream()
                 .map(invoicePersistenceMapper::toDomain)
                 .collect(Collectors.toList());
@@ -85,11 +95,13 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
     @Override
     @Transactional
     public void deleteById(Long id) {
+        log.debug("Deleting invoice from DB", kv("invoiceId", id));
         springDataInvoiceRepository.deleteById(id);
     }
 
     @Override
     public boolean existsById(Long id) {
+        log.debug("Checking invoice existence", kv("invoiceId", id));
         return springDataInvoiceRepository.existsById(id);
     }
 }

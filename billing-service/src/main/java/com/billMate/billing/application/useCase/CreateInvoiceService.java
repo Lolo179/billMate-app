@@ -9,6 +9,8 @@ import com.billMate.billing.domain.client.port.out.ClientRepositoryPort;
 import com.billMate.billing.domain.invoice.port.out.InvoiceRepositoryPort;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,9 +18,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Service
 public class CreateInvoiceService implements CreateInvoiceUseCase {
 
+    private static final Logger log = LoggerFactory.getLogger(CreateInvoiceService.class);
     private final InvoiceRepositoryPort invoiceRepositoryPort;
     private final ClientRepositoryPort clientRepositoryPort;
 
@@ -30,9 +35,13 @@ public class CreateInvoiceService implements CreateInvoiceUseCase {
 
     @Override
     public Invoice execute(CreateInvoiceCommand command) {
+        log.info("Creating invoice", kv("clientId", command.clientId()), kv("lines", command.lines().size()));
         clientRepositoryPort.findById(command.clientId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Cliente con ID " + command.clientId() + " no encontrado."));
+                .orElseThrow(() -> {
+                    log.warn("Client not found", kv("clientId", command.clientId()));
+                    return new EntityNotFoundException(
+                        "Cliente con ID " + command.clientId() + " no encontrado.");
+                });
 
         List<InvoiceLineItem> lines = new ArrayList<>();
         for (CreateInvoiceCommand.LineCommand lineCmd : command.lines()) {
@@ -60,6 +69,8 @@ public class CreateInvoiceService implements CreateInvoiceUseCase {
         );
         invoice.recalculateTotal();
 
-        return invoiceRepositoryPort.save(invoice);
+        Invoice saved = invoiceRepositoryPort.save(invoice);
+        log.info("Invoice created", kv("invoiceId", saved.getId()), kv("total", saved.getTotal()), kv("status", saved.getStatus()));
+        return saved;
     }
 }

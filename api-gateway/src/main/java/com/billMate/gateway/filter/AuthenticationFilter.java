@@ -2,6 +2,7 @@ package com.billMate.gateway.filter;
 
 import com.billMate.gateway.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +20,9 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter implements WebFilter {
@@ -28,7 +32,7 @@ public class AuthenticationFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
-        System.out.println("\n🌐 [Gateway] Nueva solicitud a: " + path);
+        log.debug(">> Incoming request", kv("method", exchange.getRequest().getMethod()), kv("path", path));
 
         // Rutas públicas
         if (
@@ -48,42 +52,39 @@ public class AuthenticationFilter implements WebFilter {
                         path.startsWith("/facturas-cliente") ||
                         path.equals("/usuarios")
         ) {
-            System.out.println("🔓 Ruta pública permitida sin autenticación.");
-            System.out.println("✅ Pasando al microservicio... Ruta final: " + path);
+            log.debug("Public route, skipping auth", kv("path", path));
             return chain.filter(exchange);
         }
 
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("⛔ No se envió token o formato inválido.");
+            log.warn("Missing or invalid token", kv("method", exchange.getRequest().getMethod()), kv("path", path));
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
         String token = authHeader.substring(7);
-        System.out.println("🔐 Token recibido (parcial): " + token.substring(0, Math.min(20, token.length())) + "...");
 
         if (!jwtUtil.isTokenValid(token)) {
-            System.out.println("❌ Token inválido.");
+            log.warn("Invalid token", kv("method", exchange.getRequest().getMethod()), kv("path", path));
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
         String email = jwtUtil.extractEmail(token);
         List<String> roles = jwtUtil.extractRoles(token);
-        System.out.println("✅ Token válido. Usuario: " + email);
-        System.out.println("🎭 Roles extraídos: " + roles);
+        log.debug("Token valid", kv("email", email), kv("roles", roles));
 
         // 🔒 Verificar reglas de acceso
         if (path.startsWith("/billing/") && !(roles.contains("ADMIN") || roles.contains("USER"))) {
-            System.out.println("🚫 Acceso denegado: el usuario no tiene permiso para /billing/");
+            log.warn("Access denied to billing", kv("path", path), kv("email", email), kv("roles", roles));
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             return exchange.getResponse().setComplete();
         }
 
         if (path.startsWith("/auth/users") && !roles.contains("ADMIN")) {
-            System.out.println("🚫 Acceso denegado: solo ADMIN puede acceder a /auth/users");
+            log.warn("Access denied: ADMIN required", kv("path", path), kv("email", email));
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             return exchange.getResponse().setComplete();
         }
@@ -98,7 +99,7 @@ public class AuthenticationFilter implements WebFilter {
         var auth = new UsernamePasswordAuthenticationToken(email, null, authorities);
         var context = new SecurityContextImpl(auth);
 
-        System.out.println("✅ Acceso concedido. Continuando hacia el microservicio...");
+        log.debug("<< Access granted", kv("method", exchange.getRequest().getMethod()), kv("path", path), kv("email", email));
         return chain.filter(exchange)
                 .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)));
     }

@@ -98,6 +98,22 @@ public abstract class AuthIntegrationTestBase {
 }
 ```
 
+## Observabilidad
+
+### Correlation ID (`CorrelationIdFilter`)
+
+`OncePerRequestFilter` con `@Order(HIGHEST_PRECEDENCE)`. Lee `x-Correlation-Id` del header (propagado por API Gateway) y lo coloca en MDC.
+
+### Logging Estructurado
+
+`logback-spring.xml` con `LogstashEncoder` (JSON). Todos los logs incluyen `correlationId` automáticamente desde MDC.
+
+```java
+import static net.logstash.logback.argument.StructuredArguments.kv;
+log.info("Registering user", kv("email", request.getEmail()), kv("username", request.getUsername()));
+log.warn("Login failed: user not found", kv("email", request.getEmail()));
+```
+
 - Heredar de `AuthIntegrationTestBase`
 - `@ActiveProfiles("test")` activa `application-test.yaml`
 - `@ServiceConnection` auto-configura datasource
