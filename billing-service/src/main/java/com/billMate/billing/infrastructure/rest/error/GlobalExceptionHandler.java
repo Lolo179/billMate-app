@@ -5,6 +5,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -106,6 +107,19 @@ public class GlobalExceptionHandler {
                                 .timestamp(OffsetDateTime.now());
 
                 return ResponseEntity.badRequest().body(error);
+        }
+
+        @ExceptionHandler(DataIntegrityViolationException.class)
+        public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+                log.warn("Data integrity violation", kv("exception", ex.getClass().getSimpleName()), kv("error", ex.getMostSpecificCause().getMessage()));
+                ApiError apiError = new ApiError()
+                                .status(HttpStatus.CONFLICT.name())
+                                .code(HttpStatus.CONFLICT.value())
+                                .message(ErrorMessages.DATA_INTEGRITY_VIOLATION)
+                                .errors(List.of(ex.getMostSpecificCause().getMessage()))
+                                .timestamp(OffsetDateTime.now());
+
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
         }
 
 }

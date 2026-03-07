@@ -15,8 +15,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: false
 
 logging:
   level:
     root: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
