@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.billMate.billing.domain.invoice.model.Invoice;
-import com.billMate.billing.domain.invoice.model.InvoiceLineItem;
 import com.billMate.billing.domain.invoice.port.in.*;
 import com.billMate.billing.domain.invoice.model.InvoiceStatus;
 import com.billMate.billing.infrastructure.rest.dto.InvoiceDTO;

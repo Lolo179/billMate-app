@@ -3,15 +3,11 @@ package com.billMate.auth.controller;
 import com.billMate.auth.dto.AuthResponse;
 import com.billMate.auth.dto.LoginRequest;
 import com.billMate.auth.dto.RegisterRequest;
-import com.billMate.auth.model.User;
 import com.billMate.auth.model.UserDTO;
 import com.billMate.auth.service.AuthService;
 import com.billMate.auth.service.JwtService;
-import com.billMate.auth.service.impl.AuthServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
