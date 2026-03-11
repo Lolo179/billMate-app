@@ -1,0 +1,693 @@
+{
+  "info": {
+    "_postman_id": "c7a89fab-ad55-41f1-ac1d-b9948d269991",
+    "name": "📄 BillMate - API E2E - Con Variables",
+    "description": "Colección con variables dinámicas para pruebas E2E",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33031976"
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "description": "Login para obtener token JWT",
+      "item": [
+        {
+          "name": "🔐 Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login successful - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('TOKEN', json.token);",
+                  "pm.test('Token saved', () => {",
+                  "    pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"email\": \"admin@mail.com\", \"password\": \"admin123\" }"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 Clientes",
+      "description": "CRUD completo de clientes",
+      "item": [
+        {
+          "name": "📥 Crear cliente válido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Client created - status 201', () => {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('createdClientId', json.clientId);",
+                  "pm.test('createdClientId saved', () => {",
+                  "    pm.expect(json.clientId).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Pérez\",\n  \"email\": \"juanperez@mail.com\",\n  \"phone\": \"+34 600 123 456\",\n  \"nif\": \"12345678Z\",\n  \"address\": \"Calle Falsa 123, Madrid\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/billing/clients",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "clients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "📄 Obtener todos los clientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Clients listed - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is array', () => {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/clients",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "clients"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🕵️ Obtener cliente por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Client retrieved - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Correct client ID', () => {",
+                  "    pm.expect(json.clientId).to.eql(Number(pm.environment.get('createdClientId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/clients/{{createdClientId}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "clients",
+                "{{createdClientId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "✏️ Actualizar cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Client updated - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Name updated', () => {",
+                  "    pm.expect(json.name).to.eql('Juan Modificado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Modificado\",\n  \"email\": \"modificado@mail.com\",\n  \"phone\": \"+34 600 999 888\",\n  \"nif\": \"12345678Z\",\n  \"address\": \"Calle Nueva 456, Madrid\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/billing/clients/{{createdClientId}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "clients",
+                "{{createdClientId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧾 Facturas",
+      "description": "Flujo completo: crear, consultar, modificar, emitir, pagar, PDF, eliminar",
+      "item": [
+        {
+          "name": "✅ Crear factura válida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invoice created - status 201', () => {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('invoiceId', json.invoiceId);",
+                  "pm.test('invoiceId saved', () => {",
+                  "    pm.expect(json.invoiceId).to.be.a('number');",
+                  "});",
+                  "pm.test('Status is DRAFT', () => {",
+                  "    pm.expect(json.status).to.eql('DRAFT');",
+                  "});",
+                  "pm.test('Total includes 21% tax', () => {",
+                  "    pm.expect(json.total).to.eql(363.00);",
+                  "});",
+                  "pm.test('Line total is populated', () => {",
+                  "    pm.expect(json.invoiceLines[0].total).to.eql(300.0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": {{createdClientId}},\n  \"date\": \"2025-06-01\",\n  \"status\": \"DRAFT\",\n  \"description\": \"Servicios mensuales\",\n  \"invoiceLines\": [\n    {\n      \"description\": \"Consultoría\",\n      \"quantity\": 2.0,\n      \"unitPrice\": 150.0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "📃 Obtener facturas de cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invoices by client - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Response is array with invoices', () => {",
+                  "    pm.expect(json).to.be.an('array');",
+                  "    pm.expect(json.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices/client/{{createdClientId}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices",
+                "client",
+                "{{createdClientId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "📄 Obtener factura por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invoice retrieved - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Correct invoice ID', () => {",
+                  "    pm.expect(json.invoiceId).to.eql(Number(pm.environment.get('invoiceId')));",
+                  "});",
+                  "pm.test('Status is still DRAFT', () => {",
+                  "    pm.expect(json.status).to.eql('DRAFT');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices",
+                "{{invoiceId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "✏️ Actualizar factura (mantiene DRAFT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invoice updated - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Description updated', () => {",
+                  "    pm.expect(json.description).to.eql('Proyecto entregado');",
+                  "});",
+                  "pm.test('Status remains DRAFT', () => {",
+                  "    pm.expect(json.status).to.eql('DRAFT');",
+                  "});",
+                  "pm.test('Total recalculated with tax', () => {",
+                  "    pm.expect(json.total).to.eql(726.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": {{createdClientId}},\n  \"date\": \"2025-06-01\",\n  \"status\": \"DRAFT\",\n  \"description\": \"Proyecto entregado\",\n  \"invoiceLines\": [\n    {\n      \"description\": \"Desarrollo\",\n      \"quantity\": 3.0,\n      \"unitPrice\": 200.0\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices",
+                "{{invoiceId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "📤 Emitir factura (DRAFT → SENT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invoice emitted - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is PDF', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}/emit",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices",
+                "{{invoiceId}}",
+                "emit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "💰 Marcar como pagada (SENT → PAID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invoice paid - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Status is PAID', () => {",
+                  "    pm.expect(json.status).to.eql('PAID');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}/pay",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices",
+                "{{invoiceId}}",
+                "pay"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "📄 Descargar PDF factura",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('PDF downloaded - status 200', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is PDF', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}/pdf",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices",
+                "{{invoiceId}}",
+                "pdf"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🗑️ Eliminar factura",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invoice deleted - status 204', () => {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices",
+                "{{invoiceId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🔍 Verificar factura eliminada (espera 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invoice not found - status 404', () => {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/invoices/{{invoiceId}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "invoices",
+                "{{invoiceId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧹 Cleanup",
+      "description": "Limpieza de datos creados durante el test",
+      "item": [
+        {
+          "name": "🗑️ Eliminar cliente de prueba",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Client deleted - status 204', () => {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/billing/clients/{{createdClientId}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "billing",
+                "clients",
+                "{{createdClientId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

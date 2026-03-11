@@ -10,7 +10,11 @@ import java.util.Optional;
 
 public interface SpringDataInvoiceRepository extends JpaRepository<InvoiceEntity, Long> {
 
-    List<InvoiceEntity> findAllByClientId(Long clientId);
+    @Query("SELECT DISTINCT i FROM InvoiceEntity i LEFT JOIN FETCH i.invoiceLines WHERE i.clientId = :clientId")
+    List<InvoiceEntity> findAllByClientIdWithLines(@Param("clientId") Long clientId);
+
+    @Query("SELECT DISTINCT i FROM InvoiceEntity i LEFT JOIN FETCH i.invoiceLines")
+    List<InvoiceEntity> findAllWithLines();
 
     @Query("SELECT i FROM InvoiceEntity i LEFT JOIN FETCH i.invoiceLines WHERE i.invoiceId = :id")
     Optional<InvoiceEntity> findByIdWithLines(@Param("id") Long id);

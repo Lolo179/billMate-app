@@ -20,6 +20,12 @@ spring:
       mode: always
       encoding: UTF-8
 
+  kafka:
+    bootstrap-servers: localhost:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
   jpa:
     defer-datasource-initialization: true
     open-in-view: false

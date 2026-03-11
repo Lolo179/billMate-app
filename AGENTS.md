@@ -15,7 +15,7 @@ Bases de datos: PostgreSQL 16 — `auth_db` (puerto 5434), `billing_db` (puerto 
 
 ## Stack
 
-Java 21, Spring Boot 3.3.0, Spring Cloud 2023.0.3, Spring Security + JWT (jjwt 0.11.5, HS256), Spring Data JPA + PostgreSQL 16, OpenAPI Generator 7.3.0, iTextPDF 5.5.13.3, Thymeleaf, Lombok (excepto dominio billing), Maven multi-módulo, Docker multi-stage (eclipse-temurin:21 Alpine), GitHub Actions, Testcontainers, JUnit 5 + Mockito + MockMvc, logstash-logback-encoder 7.4 (JSON logging).
+Java 21, Spring Boot 3.3.0, Spring Cloud 2023.0.3, Spring Security + JWT (jjwt 0.11.5, HS256), Spring Data JPA + PostgreSQL 16, Apache Kafka 3.8.0 (KRaft) + Spring Kafka, OpenAPI Generator 7.3.0, iTextPDF 5.5.13.3, Thymeleaf, Lombok (excepto dominio billing), Maven multi-módulo, Docker multi-stage (eclipse-temurin:21 Alpine), GitHub Actions, Testcontainers, JUnit 5 + Mockito + MockMvc, logstash-logback-encoder 7.4 (JSON logging).
 
 ## Idioma
 
@@ -168,7 +168,30 @@ cd billing-service && mvn clean compile                    # Regenerar clases Op
 cd auth-service && mvn spring-boot:run                     # Iniciar servicio
 docker-compose -f auth-service/docker-compose.yaml up -d   # BD auth
 docker-compose -f billing-service/docker-compose.yaml up -d # BD billing
+docker-compose -f kafka/docker-compose.yaml up -d           # Kafka broker + Kafka UI
 ```
+
+## Kafka
+
+### Infraestructura
+
+Docker Compose: `kafka/docker-compose.yaml` — Apache Kafka 3.8.0 (KRaft, sin Zookeeper) + Kafka UI (kafbat, puerto `9090`).
+
+**Listeners duales:**
+- `PLAINTEXT://kafka:9092` — comunicación entre contenedores Docker
+- `PLAINTEXT_HOST://localhost:29092` — acceso desde el host (aplicaciones Spring Boot en desarrollo)
+
+Los servicios Spring Boot configuran `bootstrap-servers: localhost:29092`.
+
+### Eventos
+
+| Topic | Productor | Evento | Patrón |
+|---|---|---|---|
+| `invoice.created` | Billing Service | `InvoiceCreatedEvent` | Fire-and-forget asíncrono (`@Async`) |
+
+### Resiliencia
+
+La publicación de eventos no bloquea el flujo principal. Si Kafka no está disponible, el evento se pierde pero la operación principal (ej: crear factura) se completa con éxito. Doble try-catch: en el use case y en el adaptador Kafka.
 
 ## Observabilidad
 

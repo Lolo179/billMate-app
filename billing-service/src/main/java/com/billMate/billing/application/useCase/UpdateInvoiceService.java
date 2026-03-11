@@ -49,7 +49,6 @@ public class UpdateInvoiceService implements UpdateInvoiceUseCase {
                 });
 
         List<InvoiceLineItem> lines = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
 
         for (UpdateInvoiceCommand.LineCommand lineCmd : command.lines()) {
             BigDecimal price = BigDecimal.valueOf(lineCmd.unitPrice());
@@ -57,15 +56,19 @@ public class UpdateInvoiceService implements UpdateInvoiceUseCase {
             BigDecimal lineTotal = price.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
 
             lines.add(new InvoiceLineItem(null, lineCmd.description(), quantity, price, lineTotal));
-            total = total.add(lineTotal);
         }
 
         invoice.setClientId(command.clientId());
         invoice.setDate(command.date());
         invoice.setDescription(command.description());
-        invoice.setStatus(InvoiceStatus.valueOf(command.status()));
+
+        InvoiceStatus status = command.status() != null
+                ? InvoiceStatus.valueOf(command.status())
+                : invoice.getStatus();
+        invoice.setStatus(status);
+
         invoice.setLines(lines);
-        invoice.setTotal(total.setScale(2, RoundingMode.HALF_UP));
+        invoice.recalculateTotal();
 
         Invoice saved = invoiceRepositoryPort.save(invoice);
         log.info("Invoice updated", kv("invoiceId", saved.getId()), kv("total", saved.getTotal()));

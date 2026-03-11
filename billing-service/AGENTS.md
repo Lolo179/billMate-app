@@ -19,16 +19,19 @@ com.billMate.billing
 │       │   ├── Invoice.java            # recalculateTotal()
 │       │   ├── InvoiceLineItem.java
 │       │   └── InvoiceStatus.java      # DRAFT, SENT, PAID, CANCELLED
+│       ├── event/InvoiceCreatedEvent.java  # Evento de dominio (record)
 │       └── port/
 │           ├── in/                     # Use cases + Commands
 │           └── out/
 │               ├── InvoiceRepositoryPort.java
+│               ├── InvoiceEventPublisherPort.java
 │               └── PdfGeneratorPort.java
 ├── application/useCase/                 # @Service, constructor explícito
 │   ├── CreateClientService.java
 │   └── ...                             # Un service por use case
 └── infrastructure/
     ├── config/JpaConfiguration.java
+    ├── kafka/adapter/InvoiceKafkaAdapter.java  # @Async — implementa InvoiceEventPublisherPort
     ├── pdf/PdfGeneratorAdapter.java
     ├── persistence/
     │   ├── adapter/                    # @Component — implementan puertos de salida
@@ -50,6 +53,7 @@ com.billMate.billing
 - Setters de campos obligatorios también validan
 - Use cases: interfaz con un solo método `execute()`
 - Commands: Java `record` con validación en compact constructor
+- Eventos de dominio: Java `record` en `domain/*/event/` (ej: `InvoiceCreatedEvent`)
 - Puertos de salida: interfaces que operan con modelos de dominio (nunca entidades JPA)
 
 ### Aplicación (`application/useCase/`)
@@ -62,6 +66,7 @@ com.billMate.billing
 - Lombok **sí** permitido: `@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`
 - Controllers: `@RestController` + `@RequiredArgsConstructor`, implementan interfaces OpenAPI
 - Adaptadores JPA: `@Component` (no `@Repository`)
+- Adaptador Kafka: `@Component` + `@Async` — publicación de eventos no bloquea el flujo principal
 - Mappers: `@Component` manual (no MapStruct)
 - Entidades: `@Entity` + `@Table(name = "...")` explícito
 
@@ -273,6 +278,36 @@ CREATE TABLE IF NOT EXISTS invoice_lines (
 Se ejecuta en **cada arranque** (`sql.init.mode: always`). Hace `TRUNCATE` + reset de secuencias + inserta datos demo (~25 clientes, ~35 facturas). Solo en desarrollo — **nunca en tests** (`mode: never`).
 
 - Puerto: **8082**
+
+## Eventos (Kafka)
+
+### Patrón de publicación
+
+La publicación de eventos sigue el principio **fire-and-forget asíncrono**: el flujo principal (crear factura, etc.) no se bloquea si Kafka no está disponible.
+
+- **Puerto de salida**: `InvoiceEventPublisherPort` (interfaz en dominio)
+- **Evento**: `InvoiceCreatedEvent` (record en `domain/invoice/event/`)
+- **Adaptador**: `InvoiceKafkaAdapter` (`@Component` + `@Async`) en `infrastructure/kafka/adapter/`
+- **Topic**: `invoice.created`
+
+### Resiliencia
+
+- `CreateInvoiceService` envuelve la llamada al puerto de eventos en `try-catch` — un fallo de Kafka **nunca** impide la creación de la factura
+- `InvoiceKafkaAdapter` es `@Async` y tiene su propio `try-catch` interno
+- `@EnableAsync` habilitado en `BillServiceApplication`
+
+### Configuración Kafka
+
+```yaml
+spring:
+  kafka:
+    bootstrap-servers: localhost:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+```
+
+Docker Compose: `kafka/docker-compose.yaml` (broker en `29092` para host, `9092` para contenedores; Kafka UI en `9090`).
 
 ## Observabilidad
 

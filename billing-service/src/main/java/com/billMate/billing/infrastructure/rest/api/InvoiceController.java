@@ -65,9 +65,9 @@ public class InvoiceController implements InvoicesApi {
 
     @Override
     public ResponseEntity<Resource> emitInvoice(Long invoiceId) {
-        log.info(">> POST /invoices/{id}/emit", kv("invoiceId", invoiceId));
+        log.info(">> PUT /invoices/{id}/emit", kv("invoiceId", invoiceId));
         byte[] pdf = emitInvoiceUseCase.execute(invoiceId);
-        log.info("<< POST /invoices/{id}/emit", kv("invoiceId", invoiceId), kv("bytes", pdf.length));
+        log.info("<< PUT /invoices/{id}/emit", kv("invoiceId", invoiceId), kv("bytes", pdf.length));
         return buildPdfResponse(pdf, invoiceId);
     }
 
@@ -101,9 +101,9 @@ public class InvoiceController implements InvoicesApi {
 
     @Override
     public ResponseEntity<InvoiceDTO> payInvoice(Long invoiceId) {
-        log.info(">> POST /invoices/{id}/pay", kv("invoiceId", invoiceId));
+        log.info(">> PUT /invoices/{id}/pay", kv("invoiceId", invoiceId));
         Invoice invoice = payInvoiceUseCase.execute(invoiceId);
-        log.info("<< POST /invoices/{id}/pay", kv("invoiceId", invoiceId));
+        log.info("<< PUT /invoices/{id}/pay", kv("invoiceId", invoiceId));
         return ResponseEntity.ok(invoiceRestMapper.toDto(invoice));
     }
 

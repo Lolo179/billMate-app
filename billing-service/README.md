@@ -30,7 +30,7 @@ El núcleo de la aplicación, sin dependencias a frameworks ni infraestructura:
   - `CreateClientUseCase`, `GetClientUseCase`, `GetAllClientsUseCase`, `UpdateClientUseCase`, `DeleteClientUseCase`
   - `CreateInvoiceUseCase`, `GetInvoiceUseCase`, `GetAllInvoicesUseCase`, `GetInvoicesByClientUseCase`, `UpdateInvoiceUseCase`, `DeleteInvoiceUseCase`, `EmitInvoiceUseCase`, `DownloadInvoicePdfUseCase`, `PayInvoiceUseCase`
 - **Commands**: `CreateClientCommand`, `UpdateClientCommand`, `CreateInvoiceCommand`, `UpdateInvoiceCommand`
-- **Puertos de salida (out)**: `ClientRepositoryPort`, `InvoiceRepositoryPort`, `PdfGeneratorPort`
+- **Puertos de salida (out)**: `ClientRepositoryPort`, `InvoiceRepositoryPort`, `PdfGeneratorPort`, `InvoiceEventPublisherPort`
 
 ### Aplicación (`application/useCase/`)
 
@@ -50,6 +50,7 @@ Adaptadores que conectan el dominio con el mundo exterior:
 - **Persistencia** (`persistence/adapter/`): `ClientJpaAdapter`, `InvoiceJpaAdapter` — implementan los puertos de salida
 - **Mappers Persistencia** (`persistence/mapper/`): `ClientPersistenceMapper`, `InvoicePersistenceMapper` — convierten entre modelos de dominio y entidades JPA
 - **PDF** (`pdf/`): `PdfGeneratorAdapter` — implementa `PdfGeneratorPort`
+- **Kafka** (`kafka/adapter/`): `InvoiceKafkaAdapter` (`@Async`) — implementa `InvoiceEventPublisherPort`
 
 ### Diagrama de Dependencias
 
@@ -69,7 +70,8 @@ Adaptadores que conectan el dominio con el mundo exterior:
           │              DOMINIO (núcleo)                │
           │  Modelos: Client, Invoice, InvoiceLineItem  │
           │  Puertos IN: *UseCase interfaces            │
-          │  Puertos OUT: *RepositoryPort, PdfPort      │
+          │  Puertos OUT: *RepositoryPort, PdfPort,     │
+          │              InvoiceEventPublisherPort       │
           │  Commands: Create/Update*Command            │
           └──────────┬──────────────────┬───────────────┘
                      │                  │
@@ -107,13 +109,15 @@ billing-service/
 │   │   │       └── out/               # ClientRepositoryPort
 │   │   └── invoice/
 │   │       ├── model/                 # Invoice, InvoiceLineItem, InvoiceStatus
+│   │       ├── event/                 # InvoiceCreatedEvent (record)
 │   │       └── port/
 │   │           ├── in/                # Use case interfaces + Commands
-│   │           └── out/               # InvoiceRepositoryPort, PdfGeneratorPort
+│   │           └── out/               # InvoiceRepositoryPort, PdfGeneratorPort, InvoiceEventPublisherPort
 │   ├── application/
 │   │   └── useCase/                   # Implementaciones de use cases
 │   └── infrastructure/
 │       ├── config/                    # JpaConfiguration
+│       ├── kafka/adapter/             # InvoiceKafkaAdapter (@Async)
 │       ├── pdf/                       # PdfGeneratorAdapter
 │       ├── persistence/
 │       │   ├── adapter/               # ClientJpaAdapter, InvoiceJpaAdapter
@@ -139,6 +143,7 @@ billing-service/
 - Spring Boot 3.3.0
 - Spring Data JPA
 - PostgreSQL
+- Apache Kafka 3.8.0 (KRaft) + Spring Kafka
 - OpenAPI / Swagger
 - iText (generación de PDF)
 - Maven
@@ -230,7 +235,17 @@ src/test/java/com/billMate/billing/
 
 ---
 
-## 🐳 Docker
+## � Eventos (Kafka)
+
+Al crear una factura, se publica un evento `InvoiceCreatedEvent` en el topic `invoice.created` de Kafka. La publicación es **asíncrona** (`@Async`) y **no bloquea** el flujo principal — si Kafka no está disponible, la factura se crea igualmente.
+
+- **Broker**: `localhost:29092` (host) / `kafka:9092` (contenedores)
+- **Kafka UI**: `http://localhost:9090`
+- **Docker Compose**: `kafka/docker-compose.yaml`
+
+---
+
+## �🐳 Docker
 
 Para construir la imagen Docker:
 
