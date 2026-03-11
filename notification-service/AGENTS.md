@@ -24,6 +24,7 @@ com.billMate.notification
 - **Bootstrap servers**: `localhost:29092`
 - **Deserializer**: `JsonDeserializer` con trusted packages `com.billMate.*`
 - **Auto offset reset**: `earliest`
+- **Type mapping**: `com.billMate.billing.domain.invoice.event.InvoiceCreatedEvent` → `com.billMate.notification.event.InvoiceCreatedEvent` (mapea la clase del productor a la réplica local, evitando errores de deserialización por `__TypeId__`)
 
 ## Puerto
 

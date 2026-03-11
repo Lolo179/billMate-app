@@ -170,6 +170,7 @@ cd auth-service && mvn spring-boot:run                     # Iniciar servicio
 docker-compose -f auth-service/docker-compose.yaml up -d   # BD auth
 docker-compose -f billing-service/docker-compose.yaml up -d # BD billing
 docker-compose -f kafka/docker-compose.yaml up -d           # Kafka broker + Kafka UI
+docker-compose -f observability/docker-compose.yaml up -d   # Grafana + Loki + Promtail
 ```
 
 ## Kafka
@@ -189,6 +190,10 @@ Los servicios Spring Boot configuran `bootstrap-servers: localhost:29092`.
 | Topic | Productor | Consumidor | Evento | Patrón |
 |---|---|---|---|---|
 | `invoice.created` | Billing Service | Notification Service | `InvoiceCreatedEvent` | Fire-and-forget asíncrono (`@Async`) |
+
+### Deserialización entre servicios
+
+El productor (billing-service) serializa `com.billMate.billing.domain.invoice.event.InvoiceCreatedEvent` y el `JsonSerializer` incluye el nombre completo de clase en el header `__TypeId__`. El consumidor (notification-service) tiene su propia réplica en `com.billMate.notification.event.InvoiceCreatedEvent`, por lo que necesita `spring.json.type.mapping` para mapear la clase del productor a la clase local.
 
 ### Resiliencia
 
@@ -230,6 +235,26 @@ log.error("Unexpected error", kv("error", ex.getMessage()), ex);
 | Adapters (JPA) | `DEBUG` | Operaciones de persistencia |
 | Filters | `DEBUG` | Validación JWT, correlación |
 | Exception Handlers | `WARN`/`ERROR` | Errores de validación, recursos no encontrados, errores inesperados |
+
+### Observabilidad Centralizada (Grafana + Loki + Promtail)
+
+Docker Compose: `observability/docker-compose.yaml` — stack de logging centralizado.
+
+| Componente | Imagen | Puerto | Función |
+|---|---|---|---|
+| Grafana | grafana/grafana:11.0.0 | `3000` | Dashboard y exploración de logs |
+| Loki | grafana/loki:3.0.0 | `3100` | Almacenamiento e indexación de logs |
+| Promtail | grafana/promtail:3.0.0 | — | Agente que recolecta logs y los envía a Loki |
+
+**Promtail** lee los ficheros `../logs/*.log` (JSON emitidos por logstash-logback-encoder) y extrae los labels `service` y `level` mediante pipeline stages. Grafana tiene Loki configurado como datasource por defecto vía provisioning (`grafana-datasource.yaml`).
+
+**Credenciales Grafana:** `admin` / `admin` (acceso anónimo como Viewer habilitado).
+
+**Query LogQL ejemplo:** `{service="notification"} |= "invoice.created"`
+
+```bash
+docker-compose -f observability/docker-compose.yaml up -d   # Grafana + Loki + Promtail
+```
 
 ## Instrucciones Detalladas
 

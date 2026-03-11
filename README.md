@@ -89,6 +89,9 @@ bash scripts/install-all.bat
 - **API Gateway**: http://localhost:8080
 - **Billing Service**: http://localhost:8082
 - **Frontend**: http://localhost:3000
+- **Notification Service**: http://localhost:8084
+- **Grafana (Observabilidad)**: http://localhost:3000 (admin/admin)
+- **Kafka UI**: http://localhost:9090
 
 ### Opción 2: Ejecución con Docker Compose
 
@@ -96,6 +99,7 @@ bash scripts/install-all.bat
 docker-compose -f auth-service/docker-compose.yaml up -d
 docker-compose -f billing-service/docker-compose.yaml up -d
 docker-compose -f kafka/docker-compose.yaml up -d
+docker-compose -f observability/docker-compose.yaml up -d
 ```
 
 ---
@@ -140,6 +144,7 @@ billMate-app/
 │   └── infrastructure/     #   Adapters REST, JPA, PDF, Kafka + mappers dedicados
 ├── frontend-service/       # Aplicación frontend (Angular)
 ├── notification-service/   # Notificaciones ficticio (consume Kafka events)
+├── observability/          # Docker Compose para Grafana + Loki + Promtail
 ├── kafka/                  # Docker Compose para Kafka broker + Kafka UI
 ├── scripts/                # Scripts de instalación e inicialización
 ├── .github/workflows/      # Configuración CI/CD
