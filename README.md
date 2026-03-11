@@ -8,6 +8,7 @@
 
 - **Auth Service** (Puerto 8081): Registro y autenticación de usuarios con JWT
 - **Billing Service** (Puerto 8082): Gestión de facturas, clientes y productos – **Arquitectura Hexagonal (Ports & Adapters)** + contract-first con OpenAPI
+- **Notification Service** (Puerto 8084): Servicio ficticio de notificaciones por email – consume eventos Kafka de billing-service
 - **API Gateway** (Puerto 8080): Entrada central para peticiones, validación de JWT
 - **Frontend Service** (Puerto 3000): Angular + Bootstrap
 
@@ -138,6 +139,7 @@ billMate-app/
 │   ├── application/        #   Use cases (sin deps a infraestructura)
 │   └── infrastructure/     #   Adapters REST, JPA, PDF, Kafka + mappers dedicados
 ├── frontend-service/       # Aplicación frontend (Angular)
+├── notification-service/   # Notificaciones ficticio (consume Kafka events)
 ├── kafka/                  # Docker Compose para Kafka broker + Kafka UI
 ├── scripts/                # Scripts de instalación e inicialización
 ├── .github/workflows/      # Configuración CI/CD

@@ -9,6 +9,7 @@
 | API Gateway | 8080 | Reactivo (Spring Cloud Gateway + WebFlux) |
 | Auth Service | 8081 | Capas (Controller → Service → Repository) |
 | Billing Service | 8082 | Hexagonal estricta (Ports & Adapters) |
+| Notification Service | 8084 | Capas (Listener → Log, sin BD) |
 | Frontend Service | 8083 | SSR (Spring Boot + Thymeleaf + vanilla JS) |
 
 Bases de datos: PostgreSQL 16 — `auth_db` (puerto 5434), `billing_db` (puerto 5433).
@@ -185,9 +186,9 @@ Los servicios Spring Boot configuran `bootstrap-servers: localhost:29092`.
 
 ### Eventos
 
-| Topic | Productor | Evento | Patrón |
-|---|---|---|---|
-| `invoice.created` | Billing Service | `InvoiceCreatedEvent` | Fire-and-forget asíncrono (`@Async`) |
+| Topic | Productor | Consumidor | Evento | Patrón |
+|---|---|---|---|---|
+| `invoice.created` | Billing Service | Notification Service | `InvoiceCreatedEvent` | Fire-and-forget asíncrono (`@Async`) |
 
 ### Resiliencia
 
@@ -239,4 +240,5 @@ Cada servicio tiene su propio `AGENTS.md` con convenciones específicas:
 | `api-gateway/AGENTS.md` | Enrutamiento reactivo, filtro JWT, rutas públicas |
 | `auth-service/AGENTS.md` | Capas, endpoints, JWT, seguridad, Testcontainers |
 | `billing-service/AGENTS.md` | Hexagonal, contract-first, testing con fakes, máquina de estados |
+| `notification-service/AGENTS.md` | Consumidor Kafka, simulación de email, sin BD |
 | `frontend-service/AGENTS.md` | Thymeleaf SSR, vanilla JS, comunicación con gateway |
