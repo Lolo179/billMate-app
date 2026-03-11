@@ -40,6 +40,7 @@ public class InvoiceRestMapper {
         dto.setDescription(line.getDescription());
         dto.setQuantity(line.getQuantity() != null ? line.getQuantity().doubleValue() : null);
         dto.setUnitPrice(line.getUnitPrice() != null ? line.getUnitPrice().doubleValue() : null);
+        dto.setTotal(line.getTotal() != null ? line.getTotal().doubleValue() : null);
         return dto;
     }
 

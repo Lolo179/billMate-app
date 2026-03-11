@@ -6,6 +6,8 @@ import com.billMate.billing.domain.invoice.model.InvoiceStatus;
 import com.billMate.billing.domain.invoice.port.in.CreateInvoiceCommand;
 import com.billMate.billing.domain.invoice.port.in.CreateInvoiceUseCase;
 import com.billMate.billing.domain.client.port.out.ClientRepositoryPort;
+import com.billMate.billing.domain.invoice.event.InvoiceCreatedEvent;
+import com.billMate.billing.domain.invoice.port.out.InvoiceEventPublisherPort;
 import com.billMate.billing.domain.invoice.port.out.InvoiceRepositoryPort;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -26,11 +28,14 @@ public class CreateInvoiceService implements CreateInvoiceUseCase {
     private static final Logger log = LoggerFactory.getLogger(CreateInvoiceService.class);
     private final InvoiceRepositoryPort invoiceRepositoryPort;
     private final ClientRepositoryPort clientRepositoryPort;
+    private final InvoiceEventPublisherPort invoiceEventPublisherPort;
 
     public CreateInvoiceService(InvoiceRepositoryPort invoiceRepositoryPort,
-                                ClientRepositoryPort clientRepositoryPort) {
+                                ClientRepositoryPort clientRepositoryPort,
+                                InvoiceEventPublisherPort invoiceEventPublisherPort) {
         this.invoiceRepositoryPort = invoiceRepositoryPort;
         this.clientRepositoryPort = clientRepositoryPort;
+        this.invoiceEventPublisherPort = invoiceEventPublisherPort;
     }
 
     @Override
@@ -71,6 +76,22 @@ public class CreateInvoiceService implements CreateInvoiceUseCase {
 
         Invoice saved = invoiceRepositoryPort.save(invoice);
         log.info("Invoice created", kv("invoiceId", saved.getId()), kv("total", saved.getTotal()), kv("status", saved.getStatus()));
+
+        try {
+            invoiceEventPublisherPort.publishInvoiceCreated(new InvoiceCreatedEvent(
+                    saved.getId(),
+                    saved.getClientId(),
+                    saved.getDate(),
+                    saved.getStatus().name(),
+                    saved.getDescription(),
+                    saved.getTotal(),
+                    saved.getTaxPercentage(),
+                    saved.getCreatedAt()
+            ));
+        } catch (Exception e) {
+            log.error("Failed to publish invoice created event", kv("invoiceId", saved.getId()), e);
+        }
+
         return saved;
     }
 }

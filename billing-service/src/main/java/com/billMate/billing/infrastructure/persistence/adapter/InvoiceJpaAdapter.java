@@ -77,17 +77,19 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Invoice> findAll() {
         log.debug("Querying all invoices in DB");
-        return springDataInvoiceRepository.findAll().stream()
+        return springDataInvoiceRepository.findAllWithLines().stream()
                 .map(invoicePersistenceMapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Invoice> findAllByClientId(Long clientId) {
         log.debug("Querying invoices in DB by client", kv("clientId", clientId));
-        return springDataInvoiceRepository.findAllByClientId(clientId).stream()
+        return springDataInvoiceRepository.findAllByClientIdWithLines(clientId).stream()
                 .map(invoicePersistenceMapper::toDomain)
                 .collect(Collectors.toList());
     }

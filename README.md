@@ -29,6 +29,7 @@ El servicio de facturación sigue estrictamente el patrón hexagonal:
 - **Spring Cloud Gateway (reactivo)**
 - **Spring Data JPA + PostgreSQL**
 - **Maven** para gestión de dependencias
+- **Apache Kafka** para eventos entre microservicios
 - **Docker** & **Docker Compose** para containerización
 - **GitHub Actions** para CI/CD
 - **Swagger/OpenAPI** para documentación
@@ -93,6 +94,7 @@ bash scripts/install-all.bat
 ```bash
 docker-compose -f auth-service/docker-compose.yaml up -d
 docker-compose -f billing-service/docker-compose.yaml up -d
+docker-compose -f kafka/docker-compose.yaml up -d
 ```
 
 ---
@@ -132,10 +134,11 @@ billMate-app/
 ├── auth-service/           # Microservicio de autenticación (JWT)
 ├── api-gateway/            # API Gateway (enrutamiento + validación JWT)
 ├── billing-service/        # Microservicio de facturación (Arquitectura Hexagonal)
-│   ├── domain/             #   Modelos, puertos in/out, commands
+│   ├── domain/             #   Modelos, puertos in/out, commands, eventos
 │   ├── application/        #   Use cases (sin deps a infraestructura)
-│   └── infrastructure/     #   Adapters REST, JPA, PDF + mappers dedicados
+│   └── infrastructure/     #   Adapters REST, JPA, PDF, Kafka + mappers dedicados
 ├── frontend-service/       # Aplicación frontend (Angular)
+├── kafka/                  # Docker Compose para Kafka broker + Kafka UI
 ├── scripts/                # Scripts de instalación e inicialización
 ├── .github/workflows/      # Configuración CI/CD
 │   ├── auth-ci.yaml
