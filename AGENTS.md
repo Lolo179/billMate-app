@@ -9,6 +9,7 @@
 | API Gateway | 8080 | Reactivo (Spring Cloud Gateway + WebFlux) |
 | Auth Service | 8081 | Capas (Controller → Service → Repository) |
 | Billing Service | 8082 | Hexagonal estricta (Ports & Adapters) |
+| Notification Service | 8084 | Capas (Listener → Log, sin BD) |
 | Frontend Service | 8083 | SSR (Spring Boot + Thymeleaf + vanilla JS) |
 
 Bases de datos: PostgreSQL 16 — `auth_db` (puerto 5434), `billing_db` (puerto 5433).
@@ -169,6 +170,7 @@ cd auth-service && mvn spring-boot:run                     # Iniciar servicio
 docker-compose -f auth-service/docker-compose.yaml up -d   # BD auth
 docker-compose -f billing-service/docker-compose.yaml up -d # BD billing
 docker-compose -f kafka/docker-compose.yaml up -d           # Kafka broker + Kafka UI
+docker-compose -f observability/docker-compose.yaml up -d   # Grafana + Loki + Promtail
 ```
 
 ## Kafka
@@ -185,9 +187,13 @@ Los servicios Spring Boot configuran `bootstrap-servers: localhost:29092`.
 
 ### Eventos
 
-| Topic | Productor | Evento | Patrón |
-|---|---|---|---|
-| `invoice.created` | Billing Service | `InvoiceCreatedEvent` | Fire-and-forget asíncrono (`@Async`) |
+| Topic | Productor | Consumidor | Evento | Patrón |
+|---|---|---|---|---|
+| `invoice.created` | Billing Service | Notification Service | `InvoiceCreatedEvent` | Fire-and-forget asíncrono (`@Async`) |
+
+### Deserialización entre servicios
+
+El productor (billing-service) serializa `com.billMate.billing.domain.invoice.event.InvoiceCreatedEvent` y el `JsonSerializer` incluye el nombre completo de clase en el header `__TypeId__`. El consumidor (notification-service) tiene su propia réplica en `com.billMate.notification.event.InvoiceCreatedEvent`, por lo que necesita `spring.json.type.mapping` para mapear la clase del productor a la clase local.
 
 ### Resiliencia
 
@@ -230,6 +236,26 @@ log.error("Unexpected error", kv("error", ex.getMessage()), ex);
 | Filters | `DEBUG` | Validación JWT, correlación |
 | Exception Handlers | `WARN`/`ERROR` | Errores de validación, recursos no encontrados, errores inesperados |
 
+### Observabilidad Centralizada (Grafana + Loki + Promtail)
+
+Docker Compose: `observability/docker-compose.yaml` — stack de logging centralizado.
+
+| Componente | Imagen | Puerto | Función |
+|---|---|---|---|
+| Grafana | grafana/grafana:11.0.0 | `3000` | Dashboard y exploración de logs |
+| Loki | grafana/loki:3.0.0 | `3100` | Almacenamiento e indexación de logs |
+| Promtail | grafana/promtail:3.0.0 | — | Agente que recolecta logs y los envía a Loki |
+
+**Promtail** lee los ficheros `../logs/*.log` (JSON emitidos por logstash-logback-encoder) y extrae los labels `service` y `level` mediante pipeline stages. Grafana tiene Loki configurado como datasource por defecto vía provisioning (`grafana-datasource.yaml`).
+
+**Credenciales Grafana:** `admin` / `admin` (acceso anónimo como Viewer habilitado).
+
+**Query LogQL ejemplo:** `{service="notification"} |= "invoice.created"`
+
+```bash
+docker-compose -f observability/docker-compose.yaml up -d   # Grafana + Loki + Promtail
+```
+
 ## Instrucciones Detalladas
 
 Cada servicio tiene su propio `AGENTS.md` con convenciones específicas:
@@ -239,4 +265,5 @@ Cada servicio tiene su propio `AGENTS.md` con convenciones específicas:
 | `api-gateway/AGENTS.md` | Enrutamiento reactivo, filtro JWT, rutas públicas |
 | `auth-service/AGENTS.md` | Capas, endpoints, JWT, seguridad, Testcontainers |
 | `billing-service/AGENTS.md` | Hexagonal, contract-first, testing con fakes, máquina de estados |
+| `notification-service/AGENTS.md` | Consumidor Kafka, simulación de email, sin BD |
 | `frontend-service/AGENTS.md` | Thymeleaf SSR, vanilla JS, comunicación con gateway |
