@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     try {
-        const response = await fetch("http://localhost:8080/billing/clients", {
+        const response = await fetch(buildGatewayUrl("/billing/clients"), {
             headers: { "Authorization": "Bearer " + token }
         });
 

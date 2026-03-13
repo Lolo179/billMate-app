@@ -23,7 +23,7 @@ document.getElementById("btnGuardarCliente").addEventListener("click", () => {
         return;
     }
 
-    fetch("/billing/clients", {
+    fetch(buildGatewayUrl("/billing/clients"), {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

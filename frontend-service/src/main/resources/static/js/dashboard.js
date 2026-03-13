@@ -6,10 +6,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
         const [clientesRes, facturasRes] = await Promise.all([
-            fetch("http://localhost:8080/billing/clients", {
+            fetch(buildGatewayUrl("/billing/clients"), {
                 headers: { "Authorization": `Bearer ${token}` }
             }),
-            fetch("http://localhost:8080/billing/invoices", {
+            fetch(buildGatewayUrl("/billing/invoices"), {
                 headers: { "Authorization": `Bearer ${token}` }
             })
         ]);

@@ -1,98 +1,65 @@
-# Frontend Service – Thymeleaf SSR + Vanilla JS
+# Frontend Service - React + TypeScript
 
 ## Arquitectura
 
-Aplicación **Spring Boot + Thymeleaf** con rendering del lado del servidor (SSR). Lógica del cliente con **JavaScript vanilla** (sin React, Angular ni Vue).
+Aplicacion frontend independiente basada en React + TypeScript + Vite. No usa Spring ni SSR. El objetivo es desacoplar por completo la UI de los microservicios internos.
 
 ```
-com.billMate.frontend
-├── FrontendServiceApplication.java    # @SpringBootApplication
-├── WebConfig.java                     # Configuración de recursos estáticos
-└── controller/auth/AuthController.java # @Controller — sirve vistas Thymeleaf
+src/
+|- app/                 # Router y punto de composicion
+|- domain/              # Modelos puros (Client, Invoice, User, AuthSession)
+|- application/         # Ports y use cases
+|- infrastructure/      # HTTP, config, storage y adapters concretos
+|- ui/                  # Paginas, layout y componentes React
+|- mocks/               # MSW para desarrollo aislado
+|- test/                # Setup de Vitest
 ```
 
-## Estructura de Recursos
+## Regla principal
 
-```
-src/main/resources/
-├── templates/                    # Vistas Thymeleaf (.html)
-│   ├── auth/login.html, usuarios.html
-│   ├── dashboard.html, clientes.html, cliente-nuevo.html
-│   ├── facturas.html, facturas-cliente.html, factura-nueva.html, factura-editar.html
-│   └── fragments/               # sidebar, navbar, header, footer
-└── static/
-    ├── js/                      # JavaScript vanilla
-    │   ├── common.js            # Funciones compartidas (logout, token, navbar)
-    │   ├── auth/login.js, auth/usuarios.js
-    │   ├── dashboard.js, clientes.js, cliente-nuevo.js
-    │   └── facturas.js, facturas-cliente.js, factura-nueva.js, factura-editar.js
-    └── css/
-```
+El frontend solo conoce el API Gateway mediante `VITE_API_BASE_URL`. Nunca debe conocer `auth-service`, `billing-service`, puertos internos ni nombres de contenedor.
 
-## Rutas
+## Puertos frontend
 
-El controller usa `@Controller` (no `@RestController`) porque sirve vistas Thymeleaf:
+- `AuthApiPort`
+- `BillingApiPort`
+- `TokenStoragePort`
 
-| GET | Vista |
-|---|---|
-| `/login` | `auth/login` |
-| `/dashboard` | `dashboard` |
-| `/clientes` | `clientes` |
-| `/clientes/nuevo` | `cliente-nuevo` |
-| `/clientes/{clientId}/facturas` | `facturas-cliente` |
-| `/facturas` | `facturas` |
-| `/facturas/nueva/{clientId}` | `factura-nueva` |
-| `/facturas/{invoiceId}/editar` | `factura-editar` |
-| `/usuarios` | `auth/usuarios` |
+Los casos de uso dependen de estos puertos. React consume casos de uso o adapters inyectados desde `infrastructure/container.ts`.
 
-Los IDs dinámicos se pasan al modelo con `model.addAttribute()`.
+## Testing
 
-## Comunicación con la API
+- Unit tests: `Vitest`
+- UI tests: `Testing Library`
+- E2E: `Playwright`
+- Mock backend: `MSW`
 
-Todas las llamadas van al **API Gateway** (puerto 8080):
+Con `VITE_USE_MSW=true` la aplicacion puede ejecutarse sin levantar ningun microservicio.
 
-```javascript
-const BASE_URL = "http://localhost:8080";
+## Scripts
 
-const response = await fetch(`${BASE_URL}/billing/clients`, {
-    headers: {
-        'Authorization': `Bearer ${localStorage.getItem("jwt")}`,
-        'Content-Type': 'application/json'
-    }
-});
+```bash
+npm install
+npm run dev
+npm run build
+npm run test
+cd ../e2e && npm test
 ```
 
-> Ruta en gateway: `/billing/clients` → `StripPrefix=1` → llega como `/clients` al billing-service.
+## Configuracion
 
-## Gestión del Token JWT
+Variables en `.env`:
 
-```javascript
-// Almacenamiento
-localStorage.setItem("jwt", token);
-localStorage.getItem("jwt");
-localStorage.removeItem("jwt");
-
-// Decodificar payload
-const payload = JSON.parse(atob(token.split(".")[1]));
-const roles = payload.roles || [];
-const email = payload.sub;
+```bash
+VITE_API_BASE_URL=http://localhost:8080
+VITE_USE_MSW=false
 ```
 
-## Detección de Rol
+## Reglas de codigo
 
-```javascript
-const roles = payload.roles || [];
-if (roles.includes("ADMIN")) {
-    document.getElementById("gestion-usuarios-menu").style.display = "block";
-}
-```
-
-## Reglas de Código
-
-- `@Controller` (nunca `@RestController`) — sirve vistas, no JSON
-- JavaScript **vanilla** — sin frameworks JS, sin jQuery
-- Todas las llamadas API pasan por el gateway (`localhost:8080`)
-- JWT almacenado en `localStorage`
-- `common.js` centraliza funciones compartidas (logout, token check, navbar)
-- Thymeleaf fragments para componentes reutilizables (sidebar, navbar, header, footer)
-- Puerto: **8083**
+- TypeScript estricto siempre
+- Componentes pequenos y sin logica HTTP embebida
+- Toda llamada remota pasa por `infrastructure/http/ApiClient.ts`
+- Validacion de inputs en use cases con `zod`
+- No usar acceso directo a `fetch` desde `ui/` salvo justificacion excepcional
+- Mantener lenguaje de dominio en ingles dentro del codigo

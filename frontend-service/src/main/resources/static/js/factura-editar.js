@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
         console.log("📡 Llamando a:", `/billing/invoices/${invoiceId}`);
 
-        const res = await fetch(`/billing/invoices/${invoiceId}`, {
+        const res = await fetch(buildGatewayUrl(`/billing/invoices/${invoiceId}`), {
             headers: { "Authorization": "Bearer " + token }
         });
 
@@ -59,7 +59,7 @@ console.log("📦 Líneas recibidas (JSON):", JSON.stringify(factura.invoiceLine
     cargarLineas(factura.invoiceLines || []);
 
     // Obtener info del cliente
-    fetch(`/billing/clients/${factura.clientId}`, {
+    fetch(buildGatewayUrl(`/billing/clients/${factura.clientId}`), {
         headers: { "Authorization": "Bearer " + token }
     })
         .then(res => res.json())
@@ -160,7 +160,7 @@ function configurarBotones(estado, invoiceId) {
 
     document.getElementById("btnGuardar").onclick = () => guardarFactura(invoiceId);
     btnEmitir.onclick = () => emitirFactura(invoiceId);
-    btnPDF.onclick = () => window.open(`/billing/invoices/${invoiceId}/pdf`, "_blank");
+    btnPDF.onclick = () => window.open(buildGatewayUrl(`/billing/invoices/${invoiceId}/pdf`), "_blank");
 }
 
 function guardarFactura(invoiceId) {
@@ -183,7 +183,7 @@ function guardarFactura(invoiceId) {
         invoiceLines
     };
 
-    fetch(`/billing/invoices/${invoiceId}`, {
+    fetch(buildGatewayUrl(`/billing/invoices/${invoiceId}`), {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
@@ -207,7 +207,7 @@ function guardarFactura(invoiceId) {
 function emitirFactura(invoiceId) {
     const token = localStorage.getItem("jwt");
 
-    fetch(`/billing/invoices/${invoiceId}/emit`, {
+    fetch(buildGatewayUrl(`/billing/invoices/${invoiceId}/emit`), {
         method: "PUT",
         headers: { "Authorization": "Bearer " + token }
     })
@@ -274,7 +274,7 @@ function configurarBotones(estado, invoiceId) {
 function pagarFactura(invoiceId) {
     const token = localStorage.getItem("jwt");
 
-    fetch(`/billing/invoices/${invoiceId}/pay`, {
+    fetch(buildGatewayUrl(`/billing/invoices/${invoiceId}/pay`), {
         method: "PUT",
         headers: {
             "Authorization": "Bearer " + token
@@ -307,7 +307,7 @@ function cancelarFactura(invoiceId) {
         return;
     }
 
-    fetch(`/billing/invoices/${invoiceId}`, {
+    fetch(buildGatewayUrl(`/billing/invoices/${invoiceId}`), {
         method: "DELETE",
         headers: {
             "Authorization": "Bearer " + token
@@ -339,7 +339,7 @@ function descargarPDF(invoiceId) {
         return;
     }
 
-    fetch(`/billing/invoices/${invoiceId}/pdf`, {
+    fetch(buildGatewayUrl(`/billing/invoices/${invoiceId}/pdf`), {
         method: "GET",
         headers: {
             "Authorization": `Bearer ${token}`

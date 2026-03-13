@@ -1,0 +1,87 @@
+services:
+  auth-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  billing-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: billing_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d billing_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build:
+      context: ../auth-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  billing-service:
+    build:
+      context: ../billing-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://billing-db:5432/billing_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: localhost:29092
+    depends_on:
+      billing-db:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+
+  api-gateway:
+    build:
+      context: ../api-gateway
+      dockerfile: Dockerfile
+    environment:
+      AUTH_SERVICE_URI: http://auth-service:8081
+      BILLING_SERVICE_URI: http://billing-service:8082
+    depends_on:
+      auth-service:
+        condition: service_started
+      billing-service:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  frontend-service:
+    build:
+      context: ../frontend-service
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8080
+        VITE_USE_MSW: "false"
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "5173:8083"

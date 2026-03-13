@@ -10,7 +10,7 @@
 - **Billing Service** (Puerto 8082): Gestión de facturas, clientes y productos – **Arquitectura Hexagonal (Ports & Adapters)** + contract-first con OpenAPI
 - **Notification Service** (Puerto 8084): Servicio ficticio de notificaciones por email – consume eventos Kafka de billing-service
 - **API Gateway** (Puerto 8080): Entrada central para peticiones, validación de JWT
-- **Frontend Service** (Puerto 3000): Angular + Bootstrap
+- **Frontend Service** (Puerto 5173 en desarrollo, 8083 en contenedor): React + TypeScript + Vite
 
 ### Arquitectura Hexagonal en Billing Service
 
@@ -88,7 +88,7 @@ bash scripts/install-all.bat
 - **Auth Service**: http://localhost:8081
 - **API Gateway**: http://localhost:8080
 - **Billing Service**: http://localhost:8082
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:5173
 - **Notification Service**: http://localhost:8084
 - **Grafana (Observabilidad)**: http://localhost:3000 (admin/admin)
 - **Kafka UI**: http://localhost:9090
@@ -124,6 +124,7 @@ Se han configurado workflows automáticos para cada microservicio:
 - **`auth-ci.yaml`**: Ejecuta tests y build de auth-service en PR a develop y push a main
 - **`billing-ci.yaml`**: Ejecuta tests y build de billing-service en PR a develop y push a main  
 - **`api-gateway-ci.yaml`**: Ejecuta tests y build de api-gateway en PR a develop y push a main
+- **`frontend-ci.yaml`**: Ejecuta tests unitarios, build del frontend React y E2E con Playwright
 
 **Estos workflows:**
 - ✅ Ejecutan `mvn clean verify` con Java 21 y cache Maven

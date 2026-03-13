@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (clienteId) {
         // Mostrar facturas del cliente
-        fetch(`/billing/invoices/client/${clienteId}`, {
+        fetch(buildGatewayUrl(`/billing/invoices/client/${clienteId}`), {
             headers: {
                 "Authorization": `Bearer ${token}`
             }
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
     } else {
-    fetch("/billing/invoices", {
+    fetch(buildGatewayUrl("/billing/invoices"), {
             headers: {
                 "Authorization": `Bearer ${token}`
             }
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const ref = document.getElementById("busqueda").value.trim();
             if (!ref) return;
 
-            fetch(`/billing/invoices/${ref}`, {
+            fetch(buildGatewayUrl(`/billing/invoices/${ref}`), {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -155,7 +155,7 @@ function descargarPDF(invoiceId) {
         return;
     }
 
-    fetch(`/billing/invoices/${invoiceId}/pdf`, {
+    fetch(buildGatewayUrl(`/billing/invoices/${invoiceId}/pdf`), {
         method: "GET",
         headers: {
             "Authorization": `Bearer ${token}`
