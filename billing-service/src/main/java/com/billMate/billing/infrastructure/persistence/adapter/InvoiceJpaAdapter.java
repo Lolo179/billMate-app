@@ -3,18 +3,24 @@ package com.billMate.billing.infrastructure.persistence.adapter;
 import com.billMate.billing.domain.invoice.model.Invoice;
 import com.billMate.billing.domain.invoice.model.InvoiceLineItem;
 import com.billMate.billing.domain.invoice.port.out.InvoiceRepositoryPort;
+import com.billMate.billing.domain.shared.PageResult;
 import com.billMate.billing.infrastructure.persistence.entity.InvoiceEntity;
 import com.billMate.billing.infrastructure.persistence.entity.InvoiceLineEntity;
 import com.billMate.billing.infrastructure.persistence.mapper.InvoicePersistenceMapper;
 import com.billMate.billing.infrastructure.persistence.repository.SpringDataInvoiceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
@@ -78,20 +84,25 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Invoice> findAll() {
-        log.debug("Querying all invoices in DB");
-        return springDataInvoiceRepository.findAllWithLines().stream()
-                .map(invoicePersistenceMapper::toDomain)
-                .collect(Collectors.toList());
+    public PageResult<Invoice> findAll(int page, int size) {
+        log.debug("Querying invoices in DB", kv("page", page), kv("size", size));
+        Page<Long> invoiceIds = springDataInvoiceRepository.findPageIds(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "invoiceId"))
+        );
+
+        return mapInvoicePage(invoiceIds);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Invoice> findAllByClientId(Long clientId) {
-        log.debug("Querying invoices in DB by client", kv("clientId", clientId));
-        return springDataInvoiceRepository.findAllByClientIdWithLines(clientId).stream()
-                .map(invoicePersistenceMapper::toDomain)
-                .collect(Collectors.toList());
+    public PageResult<Invoice> findAllByClientId(Long clientId, int page, int size) {
+        log.debug("Querying invoices in DB by client", kv("clientId", clientId), kv("page", page), kv("size", size));
+        Page<Long> invoiceIds = springDataInvoiceRepository.findPageIdsByClientId(
+                clientId,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "invoiceId"))
+        );
+
+        return mapInvoicePage(invoiceIds);
     }
 
     @Override
@@ -105,5 +116,29 @@ public class InvoiceJpaAdapter implements InvoiceRepositoryPort {
     public boolean existsById(Long id) {
         log.debug("Checking invoice existence", kv("invoiceId", id));
         return springDataInvoiceRepository.existsById(id);
+    }
+
+    private PageResult<Invoice> mapInvoicePage(Page<Long> invoiceIdsPage) {
+        if (invoiceIdsPage.isEmpty()) {
+            return new PageResult<>(List.of(), invoiceIdsPage.getNumber(), invoiceIdsPage.getSize(), 0, invoiceIdsPage.getTotalPages());
+        }
+
+        List<Long> invoiceIds = invoiceIdsPage.getContent();
+        Map<Long, Invoice> invoicesById = springDataInvoiceRepository.findAllByInvoiceIdInWithLines(invoiceIds).stream()
+                .map(invoicePersistenceMapper::toDomain)
+                .collect(java.util.stream.Collectors.toMap(Invoice::getId, Function.identity()));
+
+        List<Invoice> orderedInvoices = invoiceIds.stream()
+                .map(invoicesById::get)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        return new PageResult<>(
+                orderedInvoices,
+                invoiceIdsPage.getNumber(),
+                invoiceIdsPage.getSize(),
+                invoiceIdsPage.getTotalElements(),
+                invoiceIdsPage.getTotalPages()
+        );
     }
 }

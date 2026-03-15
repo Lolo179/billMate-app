@@ -7,6 +7,7 @@ package com.billMate.billing.infrastructure.rest.api;
 
 import com.billMate.billing.infrastructure.rest.dto.ApiError;
 import com.billMate.billing.infrastructure.rest.dto.ClientDTO;
+import com.billMate.billing.infrastructure.rest.dto.ClientPageDTO;
 import com.billMate.billing.infrastructure.rest.dto.NewClientDTO;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,7 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import jakarta.annotation.Generated;
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-11T12:44:39.736947700+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-12T10:06:00.167471700+01:00[Europe/Madrid]")
 @Validated
 @Tag(name = "clients", description = "Endpoints para gestión de clientes")
 public interface ClientsApi {
@@ -162,7 +163,9 @@ public interface ClientsApi {
     /**
      * GET /clients : Obtener todos los clientes
      *
-     * @return Lista de clientes (status code 200)
+     * @param page  (optional, default to 0)
+     * @param size  (optional, default to 20)
+     * @return Página de clientes (status code 200)
      *         or Petición mal formada (status code 400)
      *         or Error interno del servidor (status code 500)
      */
@@ -171,8 +174,8 @@ public interface ClientsApi {
         summary = "Obtener todos los clientes",
         tags = { "clients" },
         responses = {
-            @ApiResponse(responseCode = "200", description = "Lista de clientes", content = {
-                @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ClientDTO.class)))
+            @ApiResponse(responseCode = "200", description = "Página de clientes", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = ClientPageDTO.class))
             }),
             @ApiResponse(responseCode = "400", description = "Petición mal formada", content = {
                 @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
@@ -188,8 +191,9 @@ public interface ClientsApi {
         produces = { "application/json" }
     )
     
-    ResponseEntity<List<ClientDTO>> getClients(
-        
+    ResponseEntity<ClientPageDTO> getClients(
+        @Min(0) @Parameter(name = "page", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size
     );
 
 

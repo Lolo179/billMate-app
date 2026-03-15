@@ -2,7 +2,9 @@ package com.billMate.billing.infrastructure.rest.api;
 
 import com.billMate.billing.domain.client.model.Client;
 import com.billMate.billing.domain.client.port.in.*;
+import com.billMate.billing.domain.shared.PageResult;
 import com.billMate.billing.infrastructure.rest.dto.ClientDTO;
+import com.billMate.billing.infrastructure.rest.dto.ClientPageDTO;
 import com.billMate.billing.infrastructure.rest.dto.NewClientDTO;
 import com.billMate.billing.infrastructure.rest.mapper.ClientRestMapper;
 import lombok.RequiredArgsConstructor;
@@ -45,13 +47,22 @@ public class ClientController implements ClientsApi {
     }
 
     @Override
-    public ResponseEntity<List<ClientDTO>> getClients() {
-        log.info(">> GET /clients");
-        List<ClientDTO> clients = getAllClientsUseCase.execute().stream()
-                .map(clientRestMapper::toDto)
-                .collect(Collectors.toList());
-        log.info("<< GET /clients", kv("count", clients.size()));
-        return ResponseEntity.ok(clients);
+    public ResponseEntity<ClientPageDTO> getClients(Integer page, Integer size) {
+        int requestedPage = page != null ? page : 0;
+        int requestedSize = size != null ? size : 20;
+
+        log.info(">> GET /clients", kv("page", requestedPage), kv("size", requestedSize));
+        PageResult<Client> clients = getAllClientsUseCase.execute(requestedPage, requestedSize);
+
+        ClientPageDTO response = new ClientPageDTO();
+        response.setItems(clients.items().stream().map(clientRestMapper::toDto).collect(Collectors.toList()));
+        response.setPage(clients.page());
+        response.setSize(clients.size());
+        response.setTotalElements(clients.totalElements());
+        response.setTotalPages(clients.totalPages());
+
+        log.info("<< GET /clients", kv("count", response.getItems().size()), kv("totalElements", response.getTotalElements()));
+        return ResponseEntity.ok(response);
     }
 
     @Override

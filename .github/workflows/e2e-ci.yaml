@@ -174,22 +174,23 @@ jobs:
           wait_for "http://127.0.0.1:8080/actuator/health" "api-gateway"
           wait_for "http://127.0.0.1:5173/login" "frontend-service"
 
-      - name: Smoke check login chain
+      - name: Smoke check login via Vite proxy
         run: |
-          # Valida la cadena completa: runner → api-gateway JVM → auth-service JVM → auth_db
+          # Valida la cadena completa tal como la usa Playwright:
+          # browser → Vite:5173 → proxy → api-gateway:8080 → auth-service:8081 → auth_db
           for attempt in $(seq 1 20); do
             http_status=$(curl --silent --output /dev/null --write-out "%{http_code}" \
-              -X POST http://127.0.0.1:8080/auth/login \
+              -X POST http://127.0.0.1:5173/auth/login \
               -H "Content-Type: application/json" \
               -d '{"email":"admin@mail.com","password":"admin123"}')
             if [ "$http_status" = "200" ]; then
-              echo "Login chain ready (attempt $attempt)"
+              echo "Full login chain ready (attempt $attempt)"
               exit 0
             fi
-            echo "  [login] attempt $attempt/20: HTTP $http_status"
+            echo "  [login via Vite] attempt $attempt/20: HTTP $http_status"
             sleep 3
           done
-          echo "Login chain did not become ready in time"
+          echo "Full login chain did not become ready in time"
           exit 1
 
       # ── Tests ────────────────────────────────────────────────────────────────

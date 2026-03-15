@@ -15,15 +15,29 @@ paths:
       operationId: getClients
       tags: [clients]
       summary: Obtener todos los clientes
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 20
       responses:
         "200":
-          description: Lista de clientes
+          description: Página de clientes
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ClientDTO"
+                $ref: "#/components/schemas/ClientPageDTO"
               examples:
                 clienteEjemplo:
                   value:
@@ -254,15 +268,28 @@ paths:
             type: integer
             format: int64
             example: 1
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 20
       responses:
         '200':
-          description: Lista de facturas del cliente
+          description: Página de facturas del cliente
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/InvoiceDTO'
+                $ref: '#/components/schemas/InvoicePageDTO'
         '400':
           description: Petición mal formada
           content:
@@ -294,15 +321,29 @@ paths:
       operationId: getInvoices
       tags: [invoices]
       summary: Obtener todas las facturas
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 20
       responses:
         '200':
-          description: Lista de facturas
+          description: Página de facturas
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/InvoiceDTO'
+                $ref: '#/components/schemas/InvoicePageDTO'
         '400':
           description: Petición mal formada
           content:
@@ -692,6 +733,33 @@ components:
         address: "Calle Falsa 123, Madrid"
         createdAt: "2025-05-15T14:30:00Z"
 
+    ClientPageDTO:
+      type: object
+      required:
+        - items
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientDTO"
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 53
+        totalPages:
+          type: integer
+          example: 3
+
     InvoiceDTO:
       type: object
       required:
@@ -736,6 +804,33 @@ components:
           type: string
           maxLength: 255
           example: "Proyecto web completo"
+
+    InvoicePageDTO:
+      type: object
+      required:
+        - items
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceDTO"
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 42
+        totalPages:
+          type: integer
+          example: 3
 
     NewInvoiceDTO:
       type: object

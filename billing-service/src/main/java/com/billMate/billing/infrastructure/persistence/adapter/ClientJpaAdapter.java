@@ -2,16 +2,18 @@ package com.billMate.billing.infrastructure.persistence.adapter;
 
 import com.billMate.billing.domain.client.model.Client;
 import com.billMate.billing.domain.client.port.out.ClientRepositoryPort;
+import com.billMate.billing.domain.shared.PageResult;
 import com.billMate.billing.infrastructure.persistence.entity.ClientEntity;
 import com.billMate.billing.infrastructure.persistence.mapper.ClientPersistenceMapper;
 import com.billMate.billing.infrastructure.persistence.repository.SpringDataClientRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
@@ -44,12 +46,19 @@ public class ClientJpaAdapter implements ClientRepositoryPort {
     }
 
     @Override
-    public List<Client> findAll() {
-        log.debug("Querying all clients in DB");
-        return springDataClientRepository.findAll()
-                .stream()
-                .map(clientPersistenceMapper::toDomain)
-                .collect(Collectors.toList());
+    public PageResult<Client> findAll(int page, int size) {
+        log.debug("Querying clients in DB", kv("page", page), kv("size", size));
+        Page<ClientEntity> clientsPage = springDataClientRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"))
+        );
+
+        return new PageResult<>(
+                clientsPage.getContent().stream().map(clientPersistenceMapper::toDomain).toList(),
+                clientsPage.getNumber(),
+                clientsPage.getSize(),
+                clientsPage.getTotalElements(),
+                clientsPage.getTotalPages()
+        );
     }
 
     @Override

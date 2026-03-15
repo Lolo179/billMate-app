@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.billMate.billing.domain.invoice.model.Invoice;
 import com.billMate.billing.domain.invoice.port.in.*;
+import com.billMate.billing.domain.shared.PageResult;
 import com.billMate.billing.infrastructure.rest.dto.InvoiceDTO;
+import com.billMate.billing.infrastructure.rest.dto.InvoicePageDTO;
 import com.billMate.billing.infrastructure.rest.dto.NewInvoiceDTO;
 import com.billMate.billing.infrastructure.rest.mapper.InvoiceRestMapper;
 
@@ -80,23 +82,41 @@ public class InvoiceController implements InvoicesApi {
     }
 
     @Override
-    public ResponseEntity<List<InvoiceDTO>> getInvoices() {
-        log.info(">> GET /invoices");
-        List<InvoiceDTO> invoices = getAllInvoicesUseCase.execute().stream()
-                .map(invoiceRestMapper::toDto)
-                .collect(Collectors.toList());
-        log.info("<< GET /invoices", kv("count", invoices.size()));
-        return ResponseEntity.ok(invoices);
+    public ResponseEntity<InvoicePageDTO> getInvoices(Integer page, Integer size) {
+        int requestedPage = page != null ? page : 0;
+        int requestedSize = size != null ? size : 20;
+
+        log.info(">> GET /invoices", kv("page", requestedPage), kv("size", requestedSize));
+        PageResult<Invoice> invoices = getAllInvoicesUseCase.execute(requestedPage, requestedSize);
+
+        InvoicePageDTO response = new InvoicePageDTO();
+        response.setItems(invoices.items().stream().map(invoiceRestMapper::toDto).collect(Collectors.toList()));
+        response.setPage(invoices.page());
+        response.setSize(invoices.size());
+        response.setTotalElements(invoices.totalElements());
+        response.setTotalPages(invoices.totalPages());
+
+        log.info("<< GET /invoices", kv("count", response.getItems().size()), kv("totalElements", response.getTotalElements()));
+        return ResponseEntity.ok(response);
     }
 
     @Override
-    public ResponseEntity<List<InvoiceDTO>> getInvoicesByClientId(Long clientId) {
-        log.info(">> GET /invoices?clientId", kv("clientId", clientId));
-        List<InvoiceDTO> invoices = getInvoicesByClientUseCase.execute(clientId).stream()
-                .map(invoiceRestMapper::toDto)
-                .collect(Collectors.toList());
-        log.info("<< GET /invoices by client", kv("clientId", clientId), kv("count", invoices.size()));
-        return ResponseEntity.ok(invoices);
+    public ResponseEntity<InvoicePageDTO> getInvoicesByClientId(Long clientId, Integer page, Integer size) {
+        int requestedPage = page != null ? page : 0;
+        int requestedSize = size != null ? size : 20;
+
+        log.info(">> GET /invoices/client/{clientId}", kv("clientId", clientId), kv("page", requestedPage), kv("size", requestedSize));
+        PageResult<Invoice> invoices = getInvoicesByClientUseCase.execute(clientId, requestedPage, requestedSize);
+
+        InvoicePageDTO response = new InvoicePageDTO();
+        response.setItems(invoices.items().stream().map(invoiceRestMapper::toDto).collect(Collectors.toList()));
+        response.setPage(invoices.page());
+        response.setSize(invoices.size());
+        response.setTotalElements(invoices.totalElements());
+        response.setTotalPages(invoices.totalPages());
+
+        log.info("<< GET /invoices by client", kv("clientId", clientId), kv("count", response.getItems().size()), kv("totalElements", response.getTotalElements()));
+        return ResponseEntity.ok(response);
     }
 
     @Override
