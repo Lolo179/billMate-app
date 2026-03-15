@@ -141,8 +141,31 @@ Cada servicio con DB tiene su `docker-compose.yaml` (PostgreSQL 16). Puertos: 54
 | `.github/workflows/auth-ci.yaml` | PR con cambios en `auth-service/**` |
 | `.github/workflows/billing-ci.yaml` | PR con cambios en `billing-service/**` |
 | `.github/workflows/api-gateway-ci.yaml` | PR con cambios en `api-gateway/**` |
+| `.github/workflows/e2e-ci.yaml` | PR con cambios en cualquier servicio o `e2e/**` |
 
-Comando: `./mvnw -B -ntp clean verify`. Concurrencia con `cancel-in-progress: true`.
+Comando servicios: `./mvnw -B -ntp clean verify`. Concurrencia con `cancel-in-progress: true`.
+
+### E2E CI — Estrategia híbrida (JVM + Docker)
+
+El workflow `e2e-ci.yaml` levanta el entorno completo para ejecutar las pruebas Playwright:
+
+| Componente | Modo | Justificación |
+|---|---|---|
+| `auth-db` / `billing-db` | Contenedor Docker | PostgreSQL como infraestructura ligera |
+| `auth-service` | Proceso JVM en el runner | Build rápido, sin imagen Docker |
+| `billing-service` | Proceso JVM en el runner | Build rápido, sin imagen Docker |
+| `api-gateway` | Contenedor Docker | Necesita conectar a servicios JVM vía `host.docker.internal` |
+| `frontend-service` | Contenedor Docker | Nginx con el build estático |
+
+**Flujo del workflow:**
+1. Build JARs de auth y billing (`mvnw clean package -DskipTests`)
+2. Levantar DBs + api-gateway + frontend con `docker-compose.ci.yaml`
+3. Esperar a que las BDs estén listas
+4. Arrancar auth-service y billing-service como procesos en background (`java -jar`)
+5. Esperar health checks de todos los servicios
+6. Ejecutar `npm test` (Playwright)
+
+**`e2e/docker-compose.ci.yaml`** incluye solo: `auth-db`, `billing-db`, `api-gateway`, `frontend-service`. El api-gateway usa `host.docker.internal` para alcanzar los servicios JVM del runner.
 
 ### CD (Tags semánticos)
 

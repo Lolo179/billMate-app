@@ -121,15 +121,23 @@ Authorization: Bearer <tu-token-jwt>
 
 Se han configurado workflows automáticos para cada microservicio:
 
-- **`auth-ci.yaml`**: Ejecuta tests y build de auth-service en PR a develop y push a main
-- **`billing-ci.yaml`**: Ejecuta tests y build de billing-service en PR a develop y push a main  
-- **`api-gateway-ci.yaml`**: Ejecuta tests y build de api-gateway en PR a develop y push a main
-- **`frontend-ci.yaml`**: Ejecuta tests unitarios, build del frontend React y E2E con Playwright
+- **`auth-ci.yaml`**: Ejecuta tests de auth-service en PR a `main`
+- **`billing-ci.yaml`**: Ejecuta tests de billing-service en PR a `main`
+- **`api-gateway-ci.yaml`**: Ejecuta tests de api-gateway en PR a `main`
+- **`frontend-ci.yaml`**: Ejecuta tests unitarios y build del frontend en PR a `main`
+- **`e2e-ci.yaml`**: Levanta el entorno completo y ejecuta las pruebas E2E Playwright en PR a `main`
 
 **Estos workflows:**
 - ✅ Ejecutan `mvn clean verify` con Java 21 y cache Maven
 - ✅ Construyen imagen Docker en push a `main` (sin push a registro)
 - ✅ Usan concurrencia para cancelar runs anteriores en la misma rama
+
+### E2E CI — Estrategia híbrida
+
+El workflow E2E usa un enfoque híbrido para minimizar tiempo de build:
+- **auth-service** y **billing-service** se arrancan como procesos JVM directamente en el runner
+- **api-gateway**, **frontend-service** y las bases de datos corren como contenedores Docker
+- El api-gateway llega a los servicios JVM via `host.docker.internal`
 
 ---
 
@@ -143,15 +151,21 @@ billMate-app/
 │   ├── domain/             #   Modelos, puertos in/out, commands, eventos
 │   ├── application/        #   Use cases (sin deps a infraestructura)
 │   └── infrastructure/     #   Adapters REST, JPA, PDF, Kafka + mappers dedicados
-├── frontend-service/       # Aplicación frontend (Angular)
+├── frontend-service/       # Aplicación frontend (React + TypeScript + Vite)
 ├── notification-service/   # Notificaciones ficticio (consume Kafka events)
+├── e2e/                    # Tests E2E Playwright (entorno completo)
+│   ├── tests/              #   Escenarios Playwright
+│   ├── docker-compose.ci.yaml  #  Infra CI (DBs + gateway + frontend)
+│   └── playwright.config.ts
 ├── observability/          # Docker Compose para Grafana + Loki + Promtail
 ├── kafka/                  # Docker Compose para Kafka broker + Kafka UI
 ├── scripts/                # Scripts de instalación e inicialización
 ├── .github/workflows/      # Configuración CI/CD
 │   ├── auth-ci.yaml
 │   ├── billing-ci.yaml
-│   └── api-gateway-ci.yaml
+│   ├── api-gateway-ci.yaml
+│   ├── frontend-ci.yaml
+│   └── e2e-ci.yaml
 └── README.md               # Este archivo
 ```
 

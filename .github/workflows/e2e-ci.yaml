@@ -46,6 +46,18 @@ jobs:
             frontend-service/package-lock.json
             e2e/package-lock.json
 
+      - name: Build auth-service JAR
+        working-directory: auth-service
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests -B -ntp
+
+      - name: Build billing-service JAR
+        working-directory: billing-service
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests -B -ntp
+
       - name: Install E2E dependencies
         working-directory: e2e
         run: npm ci
@@ -57,12 +69,48 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Start full environment with Docker Compose
+      - name: Start infrastructure and Docker services
         run: |
           mkdir -p .tmp
           docker compose -f e2e/docker-compose.ci.yaml up -d --build
 
-      - name: Wait for environment
+      - name: Wait for databases
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker compose -f e2e/docker-compose.ci.yaml exec -T auth-db pg_isready -U postgres > /dev/null 2>&1; then
+              echo "auth-db is ready"; break
+            fi
+            sleep 2
+          done
+          for attempt in $(seq 1 30); do
+            if docker compose -f e2e/docker-compose.ci.yaml exec -T billing-db pg_isready -U postgres > /dev/null 2>&1; then
+              echo "billing-db is ready"; break
+            fi
+            sleep 2
+          done
+
+      - name: Start auth-service
+        run: |
+          java -jar auth-service/target/*.jar \
+            --spring.docker-compose.enabled=false \
+            --spring.datasource.url=jdbc:postgresql://localhost:5434/auth_db \
+            --spring.datasource.username=postgres \
+            --spring.datasource.password=postgres \
+            > .tmp/auth-service.log 2>&1 &
+          echo $! > .tmp/auth-service.pid
+
+      - name: Start billing-service
+        run: |
+          java -jar billing-service/target/*.jar \
+            --spring.docker-compose.enabled=false \
+            --spring.datasource.url=jdbc:postgresql://localhost:5433/billing_db \
+            --spring.datasource.username=postgres \
+            --spring.datasource.password=postgres \
+            --spring.kafka.bootstrap-servers=localhost:29092 \
+            > .tmp/billing-service.log 2>&1 &
+          echo $! > .tmp/billing-service.pid
+
+      - name: Wait for all services
         run: |
           wait_for() {
             local url="$1"
@@ -114,4 +162,7 @@ jobs:
 
       - name: Stop full environment
         if: always()
-        run: docker compose -f e2e/docker-compose.ci.yaml down -v --remove-orphans
+        run: |
+          docker compose -f e2e/docker-compose.ci.yaml down -v --remove-orphans
+          [ -f .tmp/auth-service.pid ] && kill "$(cat .tmp/auth-service.pid)" 2>/dev/null || true
+          [ -f .tmp/billing-service.pid ] && kill "$(cat .tmp/billing-service.pid)" 2>/dev/null || true
