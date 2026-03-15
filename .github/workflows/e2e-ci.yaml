@@ -107,6 +107,7 @@ jobs:
             --spring.datasource.username=postgres \
             --spring.datasource.password=postgres \
             --spring.kafka.bootstrap-servers=localhost:29092 \
+            --management.health.kafka.enabled=false \
             > .tmp/billing-service.log 2>&1 &
           echo $! > .tmp/billing-service.pid
 
@@ -115,14 +116,17 @@ jobs:
           wait_for() {
             local url="$1"
             local name="$2"
+            local http_status
             for attempt in $(seq 1 60); do
-              if curl --fail --silent "$url" > /dev/null; then
-                echo "$name is ready"
+              http_status=$(curl --silent --output /dev/null --write-out "%{http_code}" "$url" 2>/dev/null || echo "000")
+              if [ "$http_status" = "200" ]; then
+                echo "$name is ready (attempt $attempt)"
                 return 0
               fi
+              echo "  [$name] attempt $attempt/60: HTTP $http_status"
               sleep 2
             done
-            echo "$name did not start in time"
+            echo "$name did not start in time (last HTTP: $http_status)"
             return 1
           }
 
@@ -136,6 +140,26 @@ jobs:
         env:
           E2E_BASE_URL: http://127.0.0.1:5173
         run: npm test
+
+      - name: Dump service logs on failure
+        if: failure()
+        run: |
+          echo "::group::auth-service.log (last 150 lines)"
+          tail -n 150 .tmp/auth-service.log 2>/dev/null || echo "(sin log)"
+          echo "::endgroup::"
+          echo "::group::billing-service.log (last 150 lines)"
+          tail -n 150 .tmp/billing-service.log 2>/dev/null || echo "(sin log)"
+          echo "::endgroup::"
+          echo "::group::Health check responses"
+          echo "--- auth-service ---"
+          curl -sv http://127.0.0.1:8081/actuator/health 2>&1 || true
+          echo "--- billing-service ---"
+          curl -sv http://127.0.0.1:8082/actuator/health 2>&1 || true
+          echo "--- api-gateway ---"
+          curl -sv http://127.0.0.1:8080/actuator/health 2>&1 || true
+          echo "--- frontend-service ---"
+          curl -sv http://127.0.0.1:5173/login 2>&1 || true
+          echo "::endgroup::"
 
       - name: Upload E2E artifacts
         if: failure()
