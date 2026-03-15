@@ -9,11 +9,13 @@ La capa de **dominio** (`domain/`) es Java puro. **NUNCA** importar Spring, JPA,
 ```
 com.billMate.billing
 ├── domain/                              # JAVA PURO — sin frameworks
+│   ├── shared/
+│   │   └── PageResult.java             # Record genérico de paginación: items, page, size, totalElements, totalPages
 │   ├── client/
 │   │   ├── model/Client.java           # Validación en constructor + setters
 │   │   └── port/
 │   │       ├── in/                     # Use cases + Commands (records)
-│   │       └── out/ClientRepositoryPort.java
+│   │       └── out/ClientRepositoryPort.java  # findAll(page, size) → PageResult<Client>
 │   └── invoice/
 │       ├── model/
 │       │   ├── Invoice.java            # recalculateTotal()
@@ -23,7 +25,7 @@ com.billMate.billing
 │       └── port/
 │           ├── in/                     # Use cases + Commands
 │           └── out/
-│               ├── InvoiceRepositoryPort.java
+│               ├── InvoiceRepositoryPort.java  # findAll(page, size) → PageResult<Invoice>
 │               ├── InvoiceEventPublisherPort.java
 │               └── PdfGeneratorPort.java
 ├── application/useCase/                 # @Service, constructor explícito
@@ -32,7 +34,9 @@ com.billMate.billing
 └── infrastructure/
     ├── config/JpaConfiguration.java
     ├── kafka/adapter/InvoiceKafkaAdapter.java  # @Async — implementa InvoiceEventPublisherPort
-    ├── pdf/PdfGeneratorAdapter.java
+    ├── pdf/
+    │   ├── StyledPdfGeneratorAdapter.java  # @Primary — PDF con diseño corporativo (activo)
+    │   └── PdfGeneratorAdapter.java        # Implementación básica (fallback)
     ├── persistence/
     │   ├── adapter/                    # @Component — implementan puertos de salida
     │   ├── entity/                     # @Entity + Lombok
@@ -55,6 +59,8 @@ com.billMate.billing
 - Commands: Java `record` con validación en compact constructor
 - Eventos de dominio: Java `record` en `domain/*/event/` (ej: `InvoiceCreatedEvent`)
 - Puertos de salida: interfaces que operan con modelos de dominio (nunca entidades JPA)
+- `PageResult<T>`: record genérico en `domain/shared/` para respuestas paginadas — `(List<T> items, int page, int size, long totalElements, int totalPages)`
+- Puertos de listado usan paginación: `findAll(int page, int size)` → `PageResult<T>`, `execute(Long clientId, int page, int size)` → `PageResult<Invoice>`
 
 ### Aplicación (`application/useCase/`)
 - `@Service` de Spring
@@ -69,6 +75,7 @@ com.billMate.billing
 - Adaptador Kafka: `@Component` + `@Async` — publicación de eventos no bloquea el flujo principal
 - Mappers: `@Component` manual (no MapStruct)
 - Entidades: `@Entity` + `@Table(name = "...")` explícito
+- PDF: `StyledPdfGeneratorAdapter` (`@Primary`) es la implementación activa — PDF con diseño corporativo (colores, tabla de líneas, sumas). `PdfGeneratorAdapter` permanece como fallback.
 
 ## Contract-First (OpenAPI)
 
@@ -176,6 +183,15 @@ class CreateClientServiceTest {
         private int saveCount = 0;
         // ... implementa save, findById, findAll, deleteById, existsById
         public int getSaveCount() { return saveCount; }
+
+        @Override
+        public PageResult<Client> findAll(int page, int size) {
+            int from = page * size;
+            int to = Math.min(from + size, savedClients.size());
+            List<Client> slice = from >= savedClients.size() ? List.of() : savedClients.subList(from, to);
+            int totalPages = size == 0 ? 0 : (int) Math.ceil((double) savedClients.size() / size);
+            return new PageResult<>(slice, page, size, savedClients.size(), totalPages);
+        }
     }
 }
 ```
