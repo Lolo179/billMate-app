@@ -44,7 +44,6 @@ services:
       context: ../frontend-service
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: http://localhost:8080
         VITE_USE_MSW: "false"
     depends_on:
       api-gateway:
