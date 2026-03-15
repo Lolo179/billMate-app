@@ -1,6 +1,8 @@
 package com.billMate.billing.infrastructure.persistence.repository;
 
 import com.billMate.billing.infrastructure.persistence.entity.InvoiceEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,6 +11,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SpringDataInvoiceRepository extends JpaRepository<InvoiceEntity, Long> {
+
+    @Query("SELECT i.invoiceId FROM InvoiceEntity i")
+    Page<Long> findPageIds(Pageable pageable);
+
+    @Query("SELECT i.invoiceId FROM InvoiceEntity i WHERE i.clientId = :clientId")
+    Page<Long> findPageIdsByClientId(@Param("clientId") Long clientId, Pageable pageable);
+
+    @Query("SELECT DISTINCT i FROM InvoiceEntity i LEFT JOIN FETCH i.invoiceLines WHERE i.invoiceId IN :invoiceIds")
+    List<InvoiceEntity> findAllByInvoiceIdInWithLines(@Param("invoiceIds") List<Long> invoiceIds);
 
     @Query("SELECT DISTINCT i FROM InvoiceEntity i LEFT JOIN FETCH i.invoiceLines WHERE i.clientId = :clientId")
     List<InvoiceEntity> findAllByClientIdWithLines(@Param("clientId") Long clientId);

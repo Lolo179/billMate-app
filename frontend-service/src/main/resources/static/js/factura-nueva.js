@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Cargar info del cliente
-    fetch(`/billing/clients/${clientId}`, {
+    fetch(buildGatewayUrl(`/billing/clients/${clientId}`), {
         headers: { "Authorization": "Bearer " + token }
     })
     .then(res => res.json())
@@ -46,7 +46,7 @@ function guardarNuevaFactura() {
         return;
     }
 
-    fetch("/billing/invoices", {
+    fetch(buildGatewayUrl("/billing/invoices"), {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

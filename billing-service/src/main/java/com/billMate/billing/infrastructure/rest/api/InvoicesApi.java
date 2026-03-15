@@ -7,6 +7,7 @@ package com.billMate.billing.infrastructure.rest.api;
 
 import com.billMate.billing.infrastructure.rest.dto.ApiError;
 import com.billMate.billing.infrastructure.rest.dto.InvoiceDTO;
+import com.billMate.billing.infrastructure.rest.dto.InvoicePageDTO;
 import com.billMate.billing.infrastructure.rest.dto.NewInvoiceDTO;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,7 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import jakarta.annotation.Generated;
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-11T12:44:39.736947700+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-12T10:06:00.167471700+01:00[Europe/Madrid]")
 @Validated
 @Tag(name = "invoices", description = "Endpoints para gestión de facturas")
 public interface InvoicesApi {
@@ -252,7 +253,9 @@ public interface InvoicesApi {
     /**
      * GET /invoices : Obtener todas las facturas
      *
-     * @return Lista de facturas (status code 200)
+     * @param page  (optional, default to 0)
+     * @param size  (optional, default to 20)
+     * @return Página de facturas (status code 200)
      *         or Petición mal formada (status code 400)
      *         or Error interno del servidor (status code 500)
      */
@@ -261,8 +264,8 @@ public interface InvoicesApi {
         summary = "Obtener todas las facturas",
         tags = { "invoices" },
         responses = {
-            @ApiResponse(responseCode = "200", description = "Lista de facturas", content = {
-                @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = InvoiceDTO.class)))
+            @ApiResponse(responseCode = "200", description = "Página de facturas", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = InvoicePageDTO.class))
             }),
             @ApiResponse(responseCode = "400", description = "Petición mal formada", content = {
                 @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
@@ -278,8 +281,9 @@ public interface InvoicesApi {
         produces = { "application/json" }
     )
     
-    ResponseEntity<List<InvoiceDTO>> getInvoices(
-        
+    ResponseEntity<InvoicePageDTO> getInvoices(
+        @Min(0) @Parameter(name = "page", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size
     );
 
 
@@ -287,7 +291,9 @@ public interface InvoicesApi {
      * GET /invoices/client/{clientId} : Obtener todas las facturas de un cliente
      *
      * @param clientId  (required)
-     * @return Lista de facturas del cliente (status code 200)
+     * @param page  (optional, default to 0)
+     * @param size  (optional, default to 20)
+     * @return Página de facturas del cliente (status code 200)
      *         or Petición mal formada (status code 400)
      *         or Acceso prohibido. El usuario no tiene permisos suficientes. (status code 403)
      *         or Cliente no encontrado (status code 404)
@@ -298,8 +304,8 @@ public interface InvoicesApi {
         summary = "Obtener todas las facturas de un cliente",
         tags = { "invoices" },
         responses = {
-            @ApiResponse(responseCode = "200", description = "Lista de facturas del cliente", content = {
-                @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = InvoiceDTO.class)))
+            @ApiResponse(responseCode = "200", description = "Página de facturas del cliente", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = InvoicePageDTO.class))
             }),
             @ApiResponse(responseCode = "400", description = "Petición mal formada", content = {
                 @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
@@ -321,8 +327,10 @@ public interface InvoicesApi {
         produces = { "application/json" }
     )
     
-    ResponseEntity<List<InvoiceDTO>> getInvoicesByClientId(
-        @Parameter(name = "clientId", description = "", required = true, in = ParameterIn.PATH) @PathVariable("clientId") Long clientId
+    ResponseEntity<InvoicePageDTO> getInvoicesByClientId(
+        @Parameter(name = "clientId", description = "", required = true, in = ParameterIn.PATH) @PathVariable("clientId") Long clientId,
+        @Min(0) @Parameter(name = "page", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size
     );
 
 

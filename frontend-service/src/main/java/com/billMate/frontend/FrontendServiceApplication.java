@@ -1,14 +1,17 @@
 package com.billMate.frontend;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+/**
+ * Clase legado mantenida temporalmente para no romper referencias locales.
+ * El frontend actual es una SPA React/Vite y no arranca contexto de Spring.
+ */
+public final class FrontendServiceApplication {
 
-@SpringBootApplication(scanBasePackages = "com.billMate")
-public class FrontendServiceApplication {
+    private FrontendServiceApplication() {
+    }
 
-	public static void main(String[] args) {
-		SpringApplication.run(FrontendServiceApplication.class, args);
-		System.out.println("🟢 FrontendService arrancado correctamente");
-	}
-
+    public static void main(String[] args) {
+        throw new UnsupportedOperationException(
+                "frontend-service ya no usa Spring Boot. Usa `npm run dev` o `npm run build`."
+        );
+    }
 }

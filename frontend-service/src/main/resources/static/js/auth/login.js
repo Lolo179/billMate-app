@@ -6,7 +6,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     const errorMsg = document.getElementById("error-msg");
 
     try {
-        const response = await fetch("/auth/login", {
+        const response = await fetch(buildGatewayUrl("/auth/login"), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

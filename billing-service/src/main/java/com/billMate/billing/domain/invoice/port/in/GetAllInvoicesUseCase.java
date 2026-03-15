@@ -1,10 +1,9 @@
 package com.billMate.billing.domain.invoice.port.in;
 
 import com.billMate.billing.domain.invoice.model.Invoice;
-
-import java.util.List;
+import com.billMate.billing.domain.shared.PageResult;
 
 public interface GetAllInvoicesUseCase {
 
-    List<Invoice> execute();
+    PageResult<Invoice> execute(int page, int size);
 }

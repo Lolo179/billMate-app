@@ -1,8 +1,8 @@
 package com.billMate.billing.domain.invoice.port.out;
 
 import com.billMate.billing.domain.invoice.model.Invoice;
+import com.billMate.billing.domain.shared.PageResult;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface InvoiceRepositoryPort {
@@ -11,9 +11,9 @@ public interface InvoiceRepositoryPort {
 
     Optional<Invoice> findById(Long id);
 
-    List<Invoice> findAll();
+    PageResult<Invoice> findAll(int page, int size);
 
-    List<Invoice> findAllByClientId(Long clientId);
+    PageResult<Invoice> findAllByClientId(Long clientId, int page, int size);
 
     void deleteById(Long id);
 

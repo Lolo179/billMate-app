@@ -4,6 +4,7 @@ import com.billMate.gateway.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -34,24 +35,15 @@ public class AuthenticationFilter implements WebFilter {
         String path = exchange.getRequest().getPath().value();
         log.debug(">> Incoming request", kv("method", exchange.getRequest().getMethod()), kv("path", path));
 
+        if (HttpMethod.OPTIONS.equals(exchange.getRequest().getMethod())) {
+            log.debug("CORS preflight request, skipping auth", kv("path", path));
+            return chain.filter(exchange);
+        }
+
         // Rutas públicas
-        if (
-                path.equals("/auth/login") ||
-                        path.equals("/auth/register") ||
-                        path.equals("/login") ||
-                        path.equals("/") ||
-                        path.startsWith("/actuator/") ||
-                        path.startsWith("/facturas") ||
-                        path.equals("/dashboard") ||
-                        path.equals("/clientes") ||
-                        path.startsWith("/plugins/") ||
-                        path.startsWith("/dist/") ||
-                        path.startsWith("/css/") ||
-                        path.startsWith("/js/") ||
-                        path.startsWith("/clientes/") ||
-                        path.startsWith("/facturas-cliente") ||
-                        path.equals("/usuarios")
-        ) {
+        if (path.equals("/auth/login") ||
+                path.equals("/auth/register") ||
+                path.startsWith("/actuator/")) {
             log.debug("Public route, skipping auth", kv("path", path));
             return chain.filter(exchange);
         }

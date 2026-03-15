@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    fetch(`http://localhost:8080/billing/invoices/client/${clientId}`, {
+    fetch(buildGatewayUrl(`/billing/invoices/client/${clientId}`), {
         headers: {
             "Authorization": "Bearer " + token
         }
@@ -98,7 +98,7 @@ function renderPaginacionFacturas() {
 
 function descargarPDF(invoiceId) {
     const token = localStorage.getItem("jwt");
-    fetch(`/billing/invoices/${invoiceId}/pdf`, {
+    fetch(buildGatewayUrl(`/billing/invoices/${invoiceId}/pdf`), {
         method: "GET",
         headers: {
             "Authorization": `Bearer ${token}`

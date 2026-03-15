@@ -1,8 +1,8 @@
 package com.billMate.billing.domain.client.port.out;
 
 import com.billMate.billing.domain.client.model.Client;
+import com.billMate.billing.domain.shared.PageResult;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface ClientRepositoryPort {
@@ -11,7 +11,7 @@ public interface ClientRepositoryPort {
 
     Optional<Client> findById(Long id);
 
-    List<Client> findAll();
+    PageResult<Client> findAll(int page, int size);
 
     void deleteById(Long id);
 

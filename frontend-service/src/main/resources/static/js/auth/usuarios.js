@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function cargarUsuarios() {
     const token = localStorage.getItem("jwt");
 
-    fetch("/auth/users", {
+    fetch(buildGatewayUrl("/auth/users"), {
         method: "GET",
         headers: { "Authorization": "Bearer " + token }
     })
@@ -88,7 +88,7 @@ function registrarUsuario(event) {
         role: document.getElementById("nuevoRol").value  // 👈 incluir rol
     };
 
-    fetch("/auth/register", {
+    fetch(buildGatewayUrl("/auth/register"), {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

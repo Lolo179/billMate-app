@@ -4,7 +4,16 @@ import com.billMate.billing.domain.client.model.Client;
 import com.billMate.billing.domain.invoice.model.Invoice;
 import com.billMate.billing.domain.invoice.model.InvoiceLineItem;
 import com.billMate.billing.domain.invoice.port.out.PdfGeneratorPort;
-import com.itextpdf.text.*;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -12,12 +21,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
 @Component
 @Slf4j
 public class PdfGeneratorAdapter implements PdfGeneratorPort {
+
+    private static final BaseColor BRAND_PRIMARY = new BaseColor(23, 63, 95);
+    private static final BaseColor BRAND_SECONDARY = new BaseColor(51, 122, 183);
+    private static final BaseColor SURFACE = new BaseColor(244, 247, 250);
+    private static final BaseColor BORDER = new BaseColor(220, 227, 234);
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     @Override
     public byte[] generate(Invoice invoice, Client client) {

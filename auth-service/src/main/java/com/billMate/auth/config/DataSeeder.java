@@ -21,15 +21,20 @@ public class DataSeeder implements CommandLineRunner {
 
     @EventListener(ApplicationReadyEvent.class)
     public void seedAfterStartup() {
-        if (userRepository.existsByEmail("admin@mail.com")) return;
+        seedUser("admin", "admin@mail.com", "admin123", Role.ADMIN);
+        seedUser("testuser", "testuser@billmate.com", "Test1234!", Role.USER);
+    }
 
-        User user = User.builder()
-                .username("admin")
-                .email("admin@mail.com")
-                .password(passwordEncoder.encode("admin123"))
-                .roles(Set.of(Role.ADMIN))
-                .build();
+    private void seedUser(String username, String email, String rawPassword, Role role) {
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> User.builder()
+                        .username(username)
+                        .email(email)
+                        .password(passwordEncoder.encode(rawPassword))
+                        .build());
 
+        user.setUsername(username);
+        user.setRoles(Set.of(role));
         userRepository.save(user);
     }
 
