@@ -3,6 +3,7 @@ package com.billMate.billing.application.useCase;
 import com.billMate.billing.domain.client.model.Client;
 import com.billMate.billing.domain.client.port.in.CreateClientCommand;
 import com.billMate.billing.domain.client.port.out.ClientRepositoryPort;
+import com.billMate.billing.domain.shared.PageResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -109,8 +110,12 @@ class CreateClientServiceTest {
         }
 
         @Override
-        public List<Client> findAll() {
-            return List.copyOf(savedClients);
+        public PageResult<Client> findAll(int page, int size) {
+            int from = page * size;
+            int to = Math.min(from + size, savedClients.size());
+            List<Client> slice = from >= savedClients.size() ? List.of() : savedClients.subList(from, to);
+            int totalPages = size == 0 ? 0 : (int) Math.ceil((double) savedClients.size() / size);
+            return new PageResult<>(slice, page, size, savedClients.size(), totalPages);
         }
 
         @Override

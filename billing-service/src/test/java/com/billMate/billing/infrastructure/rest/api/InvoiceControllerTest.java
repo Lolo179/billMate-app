@@ -1,6 +1,7 @@
 package com.billMate.billing.infrastructure.rest.api;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -9,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.billMate.billing.domain.invoice.model.Invoice;
 import com.billMate.billing.domain.invoice.port.in.*;
 import com.billMate.billing.domain.invoice.model.InvoiceStatus;
+import com.billMate.billing.domain.shared.PageResult;
 import com.billMate.billing.infrastructure.rest.dto.InvoiceDTO;
 import com.billMate.billing.infrastructure.rest.dto.NewInvoiceDTO;
 import com.billMate.billing.infrastructure.rest.mapper.InvoiceRestMapper;
@@ -167,7 +169,8 @@ public class InvoiceControllerTest {
         Invoice i2 = new Invoice(2L, 5L, List.of(), null, null, null,
                 BigDecimal.valueOf(75.0), BigDecimal.valueOf(21), null);
 
-        when(getInvoicesByClientUseCase.execute(5L)).thenReturn(List.of(i1, i2));
+        PageResult<Invoice> page = new PageResult<>(List.of(i1, i2), 0, 20, 2L, 1);
+        when(getInvoicesByClientUseCase.execute(eq(5L), anyInt(), anyInt())).thenReturn(page);
 
         InvoiceDTO dto1 = new InvoiceDTO();
         dto1.setInvoiceId(1L);
@@ -180,8 +183,8 @@ public class InvoiceControllerTest {
 
         mockMvc.perform(get("/invoices/client/5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].invoiceId").value(1))
-                .andExpect(jsonPath("$[1].invoiceId").value(2));
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].invoiceId").value(1))
+                .andExpect(jsonPath("$.items[1].invoiceId").value(2));
     }
 }
