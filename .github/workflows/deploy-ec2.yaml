@@ -3,10 +3,6 @@ name: Deploy to EC2
 on:
   push:
     branches: [ main ]
-    paths:
-      - "docker-compose.yaml"
-      - ".env.example"
-      - ".github/workflows/deploy-ec2.yaml"
   workflow_dispatch:
 
 concurrency:
@@ -15,10 +11,86 @@ concurrency:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 1 — Compilar y publicar imágenes en GHCR
+  # ══════════════════════════════════════════════════════════════════════
+  build-and-push:
+    name: Build & Push Docker images
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Lowercase owner
+        id: owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push auth-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth-service
+          file: ./auth-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/auth-service:latest
+          cache-from: type=gha,scope=auth
+          cache-to: type=gha,scope=auth,mode=max
+
+      - name: Build & push billing-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./billing-service
+          file: ./billing-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/billing-service:latest
+          cache-from: type=gha,scope=billing
+          cache-to: type=gha,scope=billing,mode=max
+
+      - name: Build & push api-gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api-gateway
+          file: ./api-gateway/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/api-gateway:latest
+          cache-from: type=gha,scope=gateway
+          cache-to: type=gha,scope=gateway,mode=max
+
+      - name: Build & push frontend-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend-service
+          file: ./frontend-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/frontend-service:latest
+          build-args: |
+            VITE_API_BASE_URL=
+            VITE_USE_MSW=false
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 2 — Desplegar en EC2
+  # ══════════════════════════════════════════════════════════════════════
   deploy:
     name: Deploy to EC2 (Ubuntu)
+    needs: build-and-push
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
