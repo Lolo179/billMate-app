@@ -14,7 +14,6 @@
         <module>auth-service</module>
         <module>billing-service</module>
         <module>api-gateway</module>
-        <module>frontend-service</module>
         <module>notification-service</module>
     </modules>
 

@@ -26,11 +26,14 @@ El servicio sigue estrictamente la arquitectura hexagonal (Ports & Adapters), co
 El núcleo de la aplicación, sin dependencias a frameworks ni infraestructura:
 
 - **Modelos**: `Client`, `Invoice`, `InvoiceLineItem`, `InvoiceStatus`
+- **Paginación**: `PageResult<T>` — record genérico en `domain/shared/` con `items`, `page`, `size`, `totalElements`, `totalPages`
 - **Puertos de entrada (in)**: interfaces de casos de uso que definen las operaciones del sistema
   - `CreateClientUseCase`, `GetClientUseCase`, `GetAllClientsUseCase`, `UpdateClientUseCase`, `DeleteClientUseCase`
   - `CreateInvoiceUseCase`, `GetInvoiceUseCase`, `GetAllInvoicesUseCase`, `GetInvoicesByClientUseCase`, `UpdateInvoiceUseCase`, `DeleteInvoiceUseCase`, `EmitInvoiceUseCase`, `DownloadInvoicePdfUseCase`, `PayInvoiceUseCase`
 - **Commands**: `CreateClientCommand`, `UpdateClientCommand`, `CreateInvoiceCommand`, `UpdateInvoiceCommand`
 - **Puertos de salida (out)**: `ClientRepositoryPort`, `InvoiceRepositoryPort`, `PdfGeneratorPort`, `InvoiceEventPublisherPort`
+
+> Los puertos de listado son paginados: `findAll(int page, int size) → PageResult<T>` y `GetInvoicesByClientUseCase.execute(Long clientId, int page, int size) → PageResult<Invoice>`.
 
 ### Aplicación (`application/useCase/`)
 
@@ -49,7 +52,7 @@ Adaptadores que conectan el dominio con el mundo exterior:
 - **Mappers REST** (`rest/mapper/`): `ClientRestMapper`, `InvoiceRestMapper` — convierten entre modelos de dominio y DTOs
 - **Persistencia** (`persistence/adapter/`): `ClientJpaAdapter`, `InvoiceJpaAdapter` — implementan los puertos de salida
 - **Mappers Persistencia** (`persistence/mapper/`): `ClientPersistenceMapper`, `InvoicePersistenceMapper` — convierten entre modelos de dominio y entidades JPA
-- **PDF** (`pdf/`): `PdfGeneratorAdapter` — implementa `PdfGeneratorPort`
+- **PDF** (`pdf/`): `StyledPdfGeneratorAdapter` (`@Primary`) — generador activo con diseño corporativo (colores, tabla de líneas); `PdfGeneratorAdapter` como fallback
 - **Kafka** (`kafka/adapter/`): `InvoiceKafkaAdapter` (`@Async`) — implementa `InvoiceEventPublisherPort`
 
 ### Diagrama de Dependencias
@@ -113,12 +116,14 @@ billing-service/
 │   │       └── port/
 │   │           ├── in/                # Use case interfaces + Commands
 │   │           └── out/               # InvoiceRepositoryPort, PdfGeneratorPort, InvoiceEventPublisherPort
+│   └── shared/
+│       └── PageResult.java            # Record genérico de paginación (items, page, size, totalElements, totalPages)
 │   ├── application/
 │   │   └── useCase/                   # Implementaciones de use cases
 │   └── infrastructure/
 │       ├── config/                    # JpaConfiguration
 │       ├── kafka/adapter/             # InvoiceKafkaAdapter (@Async)
-│       ├── pdf/                       # PdfGeneratorAdapter
+│       ├── pdf/                       # StyledPdfGeneratorAdapter (@Primary), PdfGeneratorAdapter
 │       ├── persistence/
 │       │   ├── adapter/               # ClientJpaAdapter, InvoiceJpaAdapter
 │       │   ├── entity/                # ClientEntity, InvoiceEntity, InvoiceLineEntity
