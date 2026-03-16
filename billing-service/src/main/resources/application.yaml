@@ -45,3 +45,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+billmate:
+  kafka:
+    enabled: true

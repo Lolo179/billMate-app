@@ -4,6 +4,7 @@ import com.billMate.billing.domain.invoice.event.InvoiceCreatedEvent;
 import com.billMate.billing.domain.invoice.port.out.InvoiceEventPublisherPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
 @Component
+@ConditionalOnProperty(name = "billmate.kafka.enabled", havingValue = "true")
 public class InvoiceKafkaAdapter implements InvoiceEventPublisherPort {
 
     private static final Logger log = LoggerFactory.getLogger(InvoiceKafkaAdapter.class);
