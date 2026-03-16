@@ -7,6 +7,7 @@ on:
       - "api-gateway/**"
       - "auth-service/**"
       - "billing-service/**"
+      - "notification-service/**"
       - "frontend-service/**"
       - "e2e/**"
       - ".github/workflows/e2e-ci.yaml"
