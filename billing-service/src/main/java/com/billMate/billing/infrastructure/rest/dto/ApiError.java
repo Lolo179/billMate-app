@@ -23,7 +23,7 @@ import jakarta.annotation.Generated;
  * ApiError
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-12T10:06:00.167471700+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-15T22:54:02.063831500+01:00[Europe/Madrid]")
 public class ApiError {
 
   private String status;
