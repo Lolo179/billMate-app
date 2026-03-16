@@ -1,5 +1,6 @@
 # ============================================================
-# BillMate — Entorno completo para despliegue en EC2
+# BillMate — Despliegue EC2 (t2.small / t3.small)
+# Servicios esenciales: postgres, gateway, auth, billing, frontend
 # ============================================================
 # Uso rápido (primera vez, construye las imágenes):
 #   docker compose up -d --build
@@ -16,8 +17,6 @@
 # Puertos públicos:
 #   8083 → Frontend (acceso de usuarios)
 #   8080 → API Gateway (acceso directo, Postman, etc.)
-#   3000 → Grafana
-#   9090 → Kafka UI
 # ============================================================
 
 services:
@@ -62,99 +61,6 @@ services:
       - billmate-net
     restart: unless-stopped
 
-  kafka:
-    image: apache/kafka:3.8.0
-    container_name: billmate-kafka
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      # Solo listener interno: los microservicios se conectan via kafka:9092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_LOG_DIRS: /var/lib/kafka/data
-      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
-    volumes:
-      - kafka-data:/var/lib/kafka/data
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
-    networks:
-      - billmate-net
-    restart: unless-stopped
-
-  # ══════════════════════════════
-  # OBSERVABILIDAD
-  # ══════════════════════════════
-
-  loki:
-    image: grafana/loki:3.0.0
-    container_name: billmate-loki
-    volumes:
-      - ./observability/loki-config.yaml:/etc/loki/local-config.yaml
-      - loki-data:/loki
-    command: -config.file=/etc/loki/local-config.yaml
-    networks:
-      - billmate-net
-    restart: unless-stopped
-
-  promtail:
-    image: grafana/promtail:3.0.0
-    container_name: billmate-promtail
-    volumes:
-      - ./observability/promtail-config.yaml:/etc/promtail/config.yaml
-      # Los microservicios escriben en ../logs/ (= /logs/ en Docker)
-      # Promtail lee de /var/log/billmate/ — mismo volumen nombrado
-      - billmate-logs:/var/log/billmate
-    command: -config.file=/etc/promtail/config.yaml
-    depends_on:
-      - loki
-    networks:
-      - billmate-net
-    restart: unless-stopped
-
-  grafana:
-    image: grafana/grafana:11.0.0
-    container_name: billmate-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
-      GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./observability/grafana-datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
-    depends_on:
-      - loki
-    networks:
-      - billmate-net
-    restart: unless-stopped
-
-  kafka-ui:
-    image: ghcr.io/kafbat/kafka-ui:v1.0.0
-    container_name: billmate-kafka-ui
-    ports:
-      - "9090:8080"
-    environment:
-      DYNAMIC_CONFIG_ENABLED: "true"
-      KAFKA_CLUSTERS_0_NAME: billmate
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-    depends_on:
-      kafka:
-        condition: service_healthy
-    networks:
-      - billmate-net
-    restart: unless-stopped
-
   # ══════════════════════════════
   # MICROSERVICIOS
   # ══════════════════════════════
@@ -169,9 +75,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       SPRING_DOCKER_COMPOSE_ENABLED: "false"
       JWT_SECRET: ${JWT_SECRET:-gJ1yu5QC/hlLhx9d0tqZxIHH8vioFhmv9XCkUdDAX1Y=}
-    volumes:
-      # logback escribe en ../logs/ relativo a /app → /logs/
-      - billmate-logs:/logs
     depends_on:
       postgres-auth:
         condition: service_healthy
@@ -193,14 +96,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-billing:5432/billing_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # Kafka deshabilitado en EC2 small — la publicación de eventos falla silenciosamente
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
+      SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
       SPRING_DOCKER_COMPOSE_ENABLED: "false"
-    volumes:
-      - billmate-logs:/logs
     depends_on:
       postgres-billing:
-        condition: service_healthy
-      kafka:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1"]
@@ -208,21 +109,6 @@ services:
       timeout: 5s
       retries: 12
       start_period: 60s
-    networks:
-      - billmate-net
-    restart: unless-stopped
-
-  notification-service:
-    build: ./notification-service
-    image: ghcr.io/lolo179/notification-service:latest
-    container_name: billmate-notification-service
-    environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    volumes:
-      - billmate-logs:/logs
-    depends_on:
-      kafka:
-        condition: service_healthy
     networks:
       - billmate-net
     restart: unless-stopped
@@ -237,8 +123,6 @@ services:
       AUTH_SERVICE_URI: http://auth-service:8081
       BILLING_SERVICE_URI: http://billing-service:8082
       JWT_SECRET: ${JWT_SECRET:-gJ1yu5QC/hlLhx9d0tqZxIHH8vioFhmv9XCkUdDAX1Y=}
-    volumes:
-      - billmate-logs:/logs
     depends_on:
       auth-service:
         condition: service_healthy
@@ -280,8 +164,3 @@ networks:
 volumes:
   postgres-auth-data:
   postgres-billing-data:
-  kafka-data:
-  loki-data:
-  grafana-data:
-  # Volumen compartido: microservicios escriben → promtail lee
-  billmate-logs:

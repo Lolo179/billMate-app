@@ -3,9 +3,6 @@ name: Frontend CI
 on:
   pull_request:
     branches: [ main ]
-    paths:
-      - "frontend-service/**"
-      - ".github/workflows/frontend-ci.yaml"
   workflow_dispatch:
 
 concurrency:
