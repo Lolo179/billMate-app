@@ -38,6 +38,7 @@ auth-service/auth-run.log
 
 ### Logs ###
 logs/*.log
+.env
 frontend-service/node_modules/
 frontend-service/dist/
 frontend-service/playwright-report/
