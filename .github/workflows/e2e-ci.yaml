@@ -3,14 +3,6 @@ name: E2E CI
 on:
   pull_request:
     branches: [ main ]
-    paths:
-      - "api-gateway/**"
-      - "auth-service/**"
-      - "billing-service/**"
-      - "notification-service/**"
-      - "frontend-service/**"
-      - "e2e/**"
-      - ".github/workflows/e2e-ci.yaml"
   workflow_dispatch:
 
 concurrency:
