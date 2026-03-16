@@ -1,0 +1,83 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "docker-compose.yaml"
+      - ".env.example"
+      - ".github/workflows/deploy-ec2.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: false   # nunca cancelar un deploy en curso
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to EC2 (Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── Preparar clave SSH ──────────────────────────────────────────────
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2.pem
+          chmod 600 ~/.ssh/ec2.pem
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      # ── Copiar docker-compose.yaml actualizado ──────────────────────────
+      - name: Upload docker-compose.yaml
+        run: |
+          scp -i ~/.ssh/ec2.pem \
+            docker-compose.yaml \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/billMate-app/docker-compose.yaml
+
+      # ── Escribir .env en la instancia (desde secret) ───────────────────
+      - name: Write .env file on EC2
+        run: |
+          ssh -i ~/.ssh/ec2.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "echo '${{ secrets.EC2_ENV }}' > ~/billMate-app/.env && chmod 600 ~/billMate-app/.env"
+
+      # ── Ejecutar deploy.sh ──────────────────────────────────────────────
+      - name: Run deploy script
+        run: |
+          ssh -i ~/.ssh/ec2.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "bash ~/billMate-app/deploy.sh"
+
+      # ── Health check post-deploy ────────────────────────────────────────
+      - name: Health check
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 20
+          ssh -i ~/.ssh/ec2.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+
+            check() {
+              local name=$1
+              local url=$2
+              local status
+              status=$(curl -sf -o /dev/null -w "%{http_code}" "$url" || echo "000")
+              if [ "$status" = "200" ]; then
+                echo "OK $name ($status)"
+              else
+                echo "FAIL $name ($status)"
+                exit 1
+              fi
+            }
+
+            check "auth-service"    "http://localhost:8081/actuator/health"
+            check "billing-service" "http://localhost:8082/actuator/health"
+            check "api-gateway"     "http://localhost:8080/actuator/health"
+            check "frontend"        "http://localhost:8083"
+          EOF
