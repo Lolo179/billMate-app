@@ -58,26 +58,47 @@ jobs:
       # ── Health check post-deploy ────────────────────────────────────────
       - name: Health check
         run: |
-          echo "Waiting for services to be ready..."
-          sleep 20
           ssh -i ~/.ssh/ec2.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
 
-            check() {
+            # Para contenedores con Docker healthcheck (auth y billing)
+            wait_healthy() {
               local name=$1
-              local url=$2
-              local status
-              status=$(curl -sf -o /dev/null -w "%{http_code}" "$url" || echo "000")
-              if [ "$status" = "200" ]; then
-                echo "OK $name ($status)"
-              else
-                echo "FAIL $name ($status)"
-                exit 1
-              fi
+              local container=$2
+              echo "Waiting for $name..."
+              for i in $(seq 1 36); do
+                STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$container" 2>/dev/null || echo "unknown")
+                if [ "$STATUS" = "healthy" ]; then
+                  echo "OK $name (healthy)"
+                  return 0
+                fi
+                echo "  [$i/36] $name: $STATUS — retrying in 5s..."
+                sleep 5
+              done
+              echo "FAIL $name did not become healthy after 3 minutes"
+              exit 1
             }
 
-            check "auth-service"    "http://localhost:8081/actuator/health"
-            check "billing-service" "http://localhost:8082/actuator/health"
-            check "api-gateway"     "http://localhost:8080/actuator/health"
-            check "frontend"        "http://localhost:8083"
+            # Para contenedores sin Docker healthcheck (gateway y frontend)
+            wait_http() {
+              local name=$1
+              local url=$2
+              echo "Waiting for $name..."
+              for i in $(seq 1 24); do
+                STATUS=$(curl -sf -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+                if [ "$STATUS" = "200" ]; then
+                  echo "OK $name ($STATUS)"
+                  return 0
+                fi
+                echo "  [$i/24] $name: HTTP $STATUS — retrying in 5s..."
+                sleep 5
+              done
+              echo "FAIL $name did not respond after 2 minutes"
+              exit 1
+            }
+
+            wait_healthy "auth-service"    "billmate-auth-service"
+            wait_healthy "billing-service" "billmate-billing-service"
+            wait_http    "api-gateway"     "http://localhost:8080/actuator/health"
+            wait_http    "frontend"        "http://localhost:8083"
           EOF
