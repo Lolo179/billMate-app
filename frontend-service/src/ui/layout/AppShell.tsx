@@ -22,8 +22,8 @@ export function AppShell() {
       <aside className="sidebar">
         <div>
           <p className="eyebrow">BillMate</p>
-          <h1>Frontend Service</h1>
-          <p className="sidebar-copy">UI desacoplada que solo habla con el gateway.</p>
+          <h1>BillMate</h1>
+          <p className="sidebar-copy">Facturación para pequeños negocios.</p>
         </div>
         <nav className="nav-menu">
           {navigationItems.map((item) => (
