@@ -131,27 +131,24 @@ Authorization: Bearer <tu-token-jwt>
 
 Todos se ejecutan en PR a `main` con concurrencia `cancel-in-progress: true`.
 
-### CD — Pipeline global (`deploy.yaml`)
+### CD — Pipeline global (`ci.yaml` + `deploy.yaml`)
 
-Activado en **push a `main`** o manualmente. Tres jobs en este orden:
+Activado en **push a `main`** con separación estricta de responsabilidades:
 
 ```
-  build-and-push ─┐
-                  ├─► deploy (EC2)
-        e2e ──────┘
+push a main
+    │
+  ci.yaml ──┬── build-and-push → GHCR :latest
+            └── e2e            → Playwright (needs: build-and-push)
+                  │ workflow_run: success
+              deploy.yaml
+                  └── deploy   → EC2 (pull + up + health check)
 ```
 
-- **`build-and-push`**: construye y publica las 4 imágenes en GHCR (`:latest`) en paralelo con los E2E
-- **`e2e`**: levanta el entorno completo (JVM + Docker) y ejecuta Playwright
-- **`deploy`**: SSH a EC2 → `docker compose pull && up -d` → health check
+- **`ci.yaml`**: construye y publica imágenes + ejecuta E2E Playwright
+- **`deploy.yaml`**: solo SSH a EC2 → pull → recreate → health check
 
-EC2 solo se actualiza si **ambos** jobs paralelos pasan.
-
-### E2E — Estrategia híbrida (JVM + Docker)
-
-- `auth-db`, `billing-db` y `kafka` corren como contenedores Docker
-- `auth-service`, `billing-service` y `api-gateway` arrancan como procesos JVM en el runner
-- `frontend-service` arranca con Vite dev server (`VITE_USE_MSW=false`)
+EC2 solo se actualiza si CI completa con éxito (build + E2E).
 
 ---
 
@@ -180,7 +177,8 @@ billMate-app/
 │   ├── api-gateway-ci.yaml #   CI: tests api-gateway (PRs)
 │   ├── frontend-ci.yaml    #   CI: tests + build frontend (PRs)
 │   ├── e2e-ci.yaml         #   CI: E2E Playwright entorno completo (PRs)
-│   └── deploy.yaml         #   CD: build-push + E2E + deploy EC2 (main)
+│   ├── ci.yaml             #   CI: build+push GHCR + E2E (main)
+│   └── deploy.yaml         #   CD: pull + deploy EC2 (cuando CI pasa)
 └── README.md               # Este archivo
 ```
 

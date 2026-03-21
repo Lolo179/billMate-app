@@ -169,29 +169,32 @@ El workflow `e2e-ci.yaml` levanta el entorno completo para ejecutar las pruebas 
 
 ### CD — Pipeline global (push a `main`)
 
-El workflow `.github/workflows/deploy.yaml` centraliza build, tests E2E y deploy en un único pipeline:
+El pipeline de entrega continua está dividido en dos workflows con responsabilidades claras:
 
 ```
-push a main / workflow_dispatch
-        │
-  ┌─────┴──────────────┐
-  │                    │
-build-and-push         e2e
-  (~60 min)           (~45 min)
-  │                    │
-  └──────┬─────────────┘
-         │  needs: [build-and-push, e2e]
-       deploy
-       (~15 min)
+push a main
+    │
+  ci.yaml ──┬── build-and-push  (~60 min)  → GHCR :latest
+            └── e2e             (~45 min)  → Playwright (needs: build-and-push)
+                  │ workflow_run: completed + success
+              deploy.yaml
+                  └── deploy    (~15 min)  → EC2
 ```
+
+#### `ci.yaml` — Integración continua (push a `main`)
 
 | Job | Qué hace |
 |---|---|
 | `build-and-push` | Construye las 4 imágenes Docker y las publica en **GHCR** con tag `:latest` |
-| `e2e` | Levanta el entorno completo y ejecuta las pruebas Playwright (misma estrategia que `e2e-ci.yaml`) |
+| `e2e` | Levanta el entorno completo y ejecuta las pruebas Playwright (`needs: build-and-push`) |
+
+#### `deploy.yaml` — Despliegue continuo (`workflow_run` de CI)
+
+| Job | Qué hace |
+|---|---|
 | `deploy` | SSH a EC2 → `docker compose pull && up -d --force-recreate` → health check |
 
-EC2 **solo se actualiza si ambos jobs paralelos pasan**. No existen tags semánticos por servicio; el deploy se activa con cada merge a `main`.
+EC2 **solo se actualiza si CI completa con éxito** (build + E2E). No existen tags semánticos por servicio; el deploy se activa automáticamente con cada merge a `main`.
 
 ## Build y Test
 
