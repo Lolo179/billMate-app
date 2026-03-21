@@ -119,25 +119,39 @@ Authorization: Bearer <tu-token-jwt>
 
 ## 📊 CI/CD con GitHub Actions
 
-Se han configurado workflows automáticos para cada microservicio:
+### CI — Por servicio (PRs a `main`)
 
-- **`auth-ci.yaml`**: Ejecuta tests de auth-service en PR a `main`
-- **`billing-ci.yaml`**: Ejecuta tests de billing-service en PR a `main`
-- **`api-gateway-ci.yaml`**: Ejecuta tests de api-gateway en PR a `main`
-- **`frontend-ci.yaml`**: Ejecuta tests unitarios y build del frontend en PR a `main`
-- **`e2e-ci.yaml`**: Levanta el entorno completo y ejecuta las pruebas E2E Playwright en PR a `main`
+| Workflow | Qué valida |
+|---|---|
+| `auth-ci.yaml` | Tests + build Docker de auth-service |
+| `billing-ci.yaml` | Tests + build Docker de billing-service |
+| `api-gateway-ci.yaml` | Tests + build Docker del api-gateway |
+| `frontend-ci.yaml` | Tests unitarios + build Vite + build Docker |
+| `e2e-ci.yaml` | Entorno completo + pruebas E2E Playwright |
 
-**Estos workflows:**
-- ✅ Ejecutan `mvn clean verify` con Java 21 y cache Maven
-- ✅ Construyen imagen Docker en push a `main` (sin push a registro)
-- ✅ Usan concurrencia para cancelar runs anteriores en la misma rama
+Todos se ejecutan en PR a `main` con concurrencia `cancel-in-progress: true`.
 
-### E2E CI — Estrategia híbrida
+### CD — Pipeline global (`deploy.yaml`)
 
-El workflow E2E usa un enfoque híbrido para minimizar tiempo de build:
-- **auth-service** y **billing-service** se arrancan como procesos JVM directamente en el runner
-- **api-gateway**, **frontend-service** y las bases de datos corren como contenedores Docker
-- El api-gateway llega a los servicios JVM via `host.docker.internal`
+Activado en **push a `main`** o manualmente. Tres jobs en este orden:
+
+```
+  build-and-push ─┐
+                  ├─► deploy (EC2)
+        e2e ──────┘
+```
+
+- **`build-and-push`**: construye y publica las 4 imágenes en GHCR (`:latest`) en paralelo con los E2E
+- **`e2e`**: levanta el entorno completo (JVM + Docker) y ejecuta Playwright
+- **`deploy`**: SSH a EC2 → `docker compose pull && up -d` → health check
+
+EC2 solo se actualiza si **ambos** jobs paralelos pasan.
+
+### E2E — Estrategia híbrida (JVM + Docker)
+
+- `auth-db`, `billing-db` y `kafka` corren como contenedores Docker
+- `auth-service`, `billing-service` y `api-gateway` arrancan como procesos JVM en el runner
+- `frontend-service` arranca con Vite dev server (`VITE_USE_MSW=false`)
 
 ---
 
@@ -161,11 +175,12 @@ billMate-app/
 ├── kafka/                  # Docker Compose para Kafka broker + Kafka UI
 ├── scripts/                # Scripts de instalación e inicialización
 ├── .github/workflows/      # Configuración CI/CD
-│   ├── auth-ci.yaml
-│   ├── billing-ci.yaml
-│   ├── api-gateway-ci.yaml
-│   ├── frontend-ci.yaml
-│   └── e2e-ci.yaml
+│   ├── auth-ci.yaml        #   CI: tests auth-service (PRs)
+│   ├── billing-ci.yaml     #   CI: tests billing-service (PRs)
+│   ├── api-gateway-ci.yaml #   CI: tests api-gateway (PRs)
+│   ├── frontend-ci.yaml    #   CI: tests + build frontend (PRs)
+│   ├── e2e-ci.yaml         #   CI: E2E Playwright entorno completo (PRs)
+│   └── deploy.yaml         #   CD: build-push + E2E + deploy EC2 (main)
 └── README.md               # Este archivo
 ```
 

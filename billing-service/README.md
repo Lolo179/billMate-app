@@ -187,16 +187,19 @@ Esto ejecutará el plugin `openapi-generator-maven-plugin` y generará automáti
 
 ## 📊 CI/CD
 
-Este servicio dispone de un workflow automático en GitHub Actions:
+### CI — `.github/workflows/billing-ci.yaml`
 
-- **Archivo**: `.github/workflows/billing-ci.yaml`
-- **Trigger**: 
-  - PR a rama `develop`
-  - Push a rama `main`
+- **Trigger**: PR a `main`
 - **Acciones**:
-  - ✅ Ejecución de tests (`mvn clean verify`)
-  - ✅ Build con Java 21 y cache Maven
-  - ✅ Construcción de imagen Docker en push a `main`
+  - ✅ Ejecución de tests (`mvn clean verify`) con Java 21 y cache Maven
+  - ✅ Build de imagen Docker (sin push al registro)
+
+### CD — `.github/workflows/deploy.yaml` (pipeline global)
+
+El deploy está centralizado en un único workflow a nivel de monorepo que se activa con cada push a `main`:
+- Construye y publica la imagen `ghcr.io/{owner}/billing-service:latest` en GHCR
+- Ejecuta las pruebas E2E Playwright en paralelo
+- Despliega a EC2 solo si ambos pasos pasan
 
 ---
 

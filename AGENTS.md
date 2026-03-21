@@ -138,12 +138,13 @@ Cada servicio con DB tiene su `docker-compose.yaml` (PostgreSQL 16). Puertos: 54
 
 | Workflow | Trigger |
 |---|---|
-| `.github/workflows/auth-ci.yaml` | PR con cambios en `auth-service/**` |
-| `.github/workflows/billing-ci.yaml` | PR con cambios en `billing-service/**` |
-| `.github/workflows/api-gateway-ci.yaml` | PR con cambios en `api-gateway/**` |
-| `.github/workflows/e2e-ci.yaml` | PR con cambios en cualquier servicio o `e2e/**` |
+| `.github/workflows/auth-ci.yaml` | PR a `main` |
+| `.github/workflows/billing-ci.yaml` | PR a `main` |
+| `.github/workflows/api-gateway-ci.yaml` | PR a `main` |
+| `.github/workflows/frontend-ci.yaml` | PR a `main` + `workflow_dispatch` |
+| `.github/workflows/e2e-ci.yaml` | PR a `main` + `workflow_dispatch` |
 
-Comando servicios: `./mvnw -B -ntp clean verify`. Concurrencia con `cancel-in-progress: true`.
+Comando servicios Java: `./mvnw -B -ntp clean verify`. Concurrencia con `cancel-in-progress: true`.
 
 ### E2E CI — Estrategia híbrida (JVM + Docker)
 
@@ -151,37 +152,46 @@ El workflow `e2e-ci.yaml` levanta el entorno completo para ejecutar las pruebas 
 
 | Componente | Modo | Justificación |
 |---|---|---|
-| `auth-db` / `billing-db` | Contenedor Docker | PostgreSQL como infraestructura ligera |
+| `auth-db` / `billing-db` / `kafka` | Contenedor Docker | Infraestructura ligera vía `e2e/docker-compose.ci.yaml` |
 | `auth-service` | Proceso JVM en el runner | Build rápido, sin imagen Docker |
 | `billing-service` | Proceso JVM en el runner | Build rápido, sin imagen Docker |
-| `api-gateway` | Contenedor Docker | Necesita conectar a servicios JVM vía `host.docker.internal` |
-| `frontend-service` | Contenedor Docker | Nginx con el build estático |
+| `api-gateway` | Proceso JVM en el runner | Build rápido, sin imagen Docker |
+| `frontend-service` | Vite dev server (`npm run dev`) | Proxy integrado hacia `localhost:8080` |
 
 **Flujo del workflow:**
-1. Build JARs de auth y billing (`mvnw clean package -DskipTests`)
-2. Levantar DBs + api-gateway + frontend con `docker-compose.ci.yaml`
-3. Esperar a que las BDs estén listas
-4. Arrancar auth-service y billing-service como procesos en background (`java -jar`)
-5. Esperar health checks de todos los servicios
-6. Ejecutar `npm test` (Playwright)
+1. Build JARs de auth, billing y api-gateway (`mvnw clean package -DskipTests`)
+2. Levantar DBs + Kafka con `e2e/docker-compose.ci.yaml`
+3. Esperar a que la infraestructura esté lista
+4. Arrancar auth-service, billing-service y api-gateway como procesos JVM en background
+5. Arrancar frontend con Vite dev server (`VITE_USE_MSW=false`)
+6. Esperar health checks de todos los servicios + smoke check de login
+7. Ejecutar `npm test` (Playwright) con `E2E_BASE_URL=http://127.0.0.1:5173`
 
-**`e2e/docker-compose.ci.yaml`** incluye solo: `auth-db`, `billing-db`, `api-gateway`, `frontend-service`. El api-gateway usa `host.docker.internal` para alcanzar los servicios JVM del runner.
+### CD — Pipeline global (push a `main`)
 
-### CD (Tags semánticos)
+El workflow `.github/workflows/deploy.yaml` centraliza build, tests E2E y deploy en un único pipeline:
 
-| Tag pattern | Servicio |
-|---|---|
-| `auth-v*.*.*` | Auth Service |
-| `billing-v*.*.*` | Billing Service |
-| `gateway-v*.*.*` | API Gateway |
-
-Flujo: test → build JAR → Docker Buildx → push a **GHCR** con tags `{version}` + `latest`.
-
-```bash
-# Crear release
-git tag billing-v1.2.0
-git push origin billing-v1.2.0
 ```
+push a main / workflow_dispatch
+        │
+  ┌─────┴──────────────┐
+  │                    │
+build-and-push         e2e
+  (~60 min)           (~45 min)
+  │                    │
+  └──────┬─────────────┘
+         │  needs: [build-and-push, e2e]
+       deploy
+       (~15 min)
+```
+
+| Job | Qué hace |
+|---|---|
+| `build-and-push` | Construye las 4 imágenes Docker y las publica en **GHCR** con tag `:latest` |
+| `e2e` | Levanta el entorno completo y ejecuta las pruebas Playwright (misma estrategia que `e2e-ci.yaml`) |
+| `deploy` | SSH a EC2 → `docker compose pull && up -d --force-recreate` → health check |
+
+EC2 **solo se actualiza si ambos jobs paralelos pasan**. No existen tags semánticos por servicio; el deploy se activa con cada merge a `main`.
 
 ## Build y Test
 
