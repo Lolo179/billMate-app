@@ -1,98 +1,36 @@
-name: Deploy to EC2
+﻿name: Deploy
 
 on:
-  push:
+  # Se activa cuando CI completa con éxito en main (build+push+E2E)
+  workflow_run:
+    workflows: [ "CI" ]
+    types: [ completed ]
     branches: [ main ]
+  # Permite lanzar un deploy manual desde Actions
   workflow_dispatch:
 
 concurrency:
-  group: deploy-ec2
+  group: deploy
   cancel-in-progress: false   # nunca cancelar un deploy en curso
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  # ══════════════════════════════════════════════════════════════════════
-  # JOB 1 — Compilar y publicar imágenes en GHCR
-  # ══════════════════════════════════════════════════════════════════════
-  build-and-push:
-    name: Build & Push Docker images
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Lowercase owner
-        id: owner
-        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & push auth-service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./auth-service
-          file: ./auth-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/auth-service:latest
-          cache-from: type=gha,scope=auth
-          cache-to: type=gha,scope=auth,mode=max
-
-      - name: Build & push billing-service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./billing-service
-          file: ./billing-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/billing-service:latest
-          cache-from: type=gha,scope=billing
-          cache-to: type=gha,scope=billing,mode=max
-
-      - name: Build & push api-gateway
-        uses: docker/build-push-action@v6
-        with:
-          context: ./api-gateway
-          file: ./api-gateway/Dockerfile
-          push: true
-          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/api-gateway:latest
-          cache-from: type=gha,scope=gateway
-          cache-to: type=gha,scope=gateway,mode=max
-
-      - name: Build & push frontend-service
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend-service
-          file: ./frontend-service/Dockerfile
-          push: true
-          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/frontend-service:latest
-          build-args: |
-            VITE_API_BASE_URL=
-            VITE_USE_MSW=false
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,scope=frontend,mode=max
 
   # ══════════════════════════════════════════════════════════════════════
-  # JOB 2 — Desplegar en EC2
+  # Desplegar en EC2
+  # Las imágenes ya están en GHCR publicadas por ci.yaml (build-and-push)
   # ══════════════════════════════════════════════════════════════════════
   deploy:
-    name: Deploy to EC2 (Ubuntu)
-    needs: build-and-push
+    name: Deploy to EC2
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # En workflow_run: solo desplegar si CI pasó completamente
+    # En workflow_dispatch: siempre ejecutar
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Checkout code
@@ -121,7 +59,7 @@ jobs:
           ssh -i ~/.ssh/ec2.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
             "echo '${{ secrets.EC2_ENV }}' > ~/billMate-app/.env && chmod 600 ~/billMate-app/.env"
 
-      # ── Instalar Docker Compose V2 en EC2 (binario directo) ───────────────
+      # ── Instalar Docker Compose V2 en EC2 (binario directo) ─────────────
       - name: Install Docker Compose V2 on EC2
         run: |
           ssh -i ~/.ssh/ec2.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \

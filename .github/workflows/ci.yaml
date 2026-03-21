@@ -1,0 +1,328 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ci-${{ github.sha }}
+  cancel-in-progress: false   # no cancelar un build en curso
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 1 — Build y publicación de imágenes en GHCR
+  # ══════════════════════════════════════════════════════════════════════
+  build-and-push:
+    name: Build & Push Docker images
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Lowercase owner
+        id: owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push auth-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth-service
+          file: ./auth-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/auth-service:latest
+          cache-from: type=gha,scope=auth
+          cache-to: type=gha,scope=auth,mode=max
+
+      - name: Build & push billing-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./billing-service
+          file: ./billing-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/billing-service:latest
+          cache-from: type=gha,scope=billing
+          cache-to: type=gha,scope=billing,mode=max
+
+      - name: Build & push api-gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api-gateway
+          file: ./api-gateway/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/api-gateway:latest
+          cache-from: type=gha,scope=gateway
+          cache-to: type=gha,scope=gateway,mode=max
+
+      - name: Build & push frontend-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend-service
+          file: ./frontend-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.OWNER }}/frontend-service:latest
+          build-args: |
+            VITE_API_BASE_URL=
+            VITE_USE_MSW=false
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+  # ══════════════════════════════════════════════════════════════════════
+  # JOB 2 — E2E con Playwright (entorno completo)
+  # Solo se ejecuta si build-and-push completó con éxito
+  # ══════════════════════════════════════════════════════════════════════
+  e2e:
+    name: E2E Tests (Playwright)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend-service/package-lock.json
+            e2e/package-lock.json
+
+      # ── Build JARs ──────────────────────────────────────────────────────────
+
+      - name: Build auth-service JAR
+        working-directory: auth-service
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests -B -ntp
+
+      - name: Build billing-service JAR
+        working-directory: billing-service
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests -B -ntp
+
+      - name: Build api-gateway JAR
+        working-directory: api-gateway
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests -B -ntp
+
+      # ── Install JS dependencies ─────────────────────────────────────────────
+
+      - name: Install frontend dependencies
+        working-directory: frontend-service
+        run: npm ci
+
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      # ── Infrastructure (Docker) ─────────────────────────────────────────────
+
+      - name: Start infrastructure (databases + Kafka)
+        run: |
+          mkdir -p .tmp
+          docker compose -f e2e/docker-compose.ci.yaml up -d
+
+      - name: Wait for infrastructure
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker compose -f e2e/docker-compose.ci.yaml exec -T auth-db pg_isready -U postgres > /dev/null 2>&1; then
+              echo "auth-db is ready"; break
+            fi
+            sleep 2
+          done
+          for attempt in $(seq 1 30); do
+            if docker compose -f e2e/docker-compose.ci.yaml exec -T billing-db pg_isready -U postgres > /dev/null 2>&1; then
+              echo "billing-db is ready"; break
+            fi
+            sleep 2
+          done
+          for attempt in $(seq 1 30); do
+            if docker compose -f e2e/docker-compose.ci.yaml exec -T kafka /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1; then
+              echo "kafka is ready"; break
+            fi
+            sleep 3
+          done
+
+      # ── Application services (JVM + Vite) ──────────────────────────────────
+
+      - name: Start auth-service
+        run: |
+          java -jar auth-service/target/*.jar \
+            --spring.docker-compose.enabled=false \
+            --spring.datasource.url=jdbc:postgresql://localhost:5434/auth_db \
+            --spring.datasource.username=postgres \
+            --spring.datasource.password=postgres \
+            > .tmp/auth-service.log 2>&1 &
+          echo $! > .tmp/auth-service.pid
+
+      - name: Start billing-service
+        run: |
+          java -jar billing-service/target/*.jar \
+            --spring.docker-compose.enabled=false \
+            --spring.datasource.url=jdbc:postgresql://localhost:5433/billing_db \
+            --spring.datasource.username=postgres \
+            --spring.datasource.password=postgres \
+            --spring.kafka.bootstrap-servers=localhost:29092 \
+            --management.health.kafka.enabled=false \
+            > .tmp/billing-service.log 2>&1 &
+          echo $! > .tmp/billing-service.pid
+
+      - name: Start api-gateway
+        run: |
+          java -jar api-gateway/target/*.jar \
+            --spring.docker-compose.enabled=false \
+            > .tmp/api-gateway.log 2>&1 &
+          echo $! > .tmp/api-gateway.pid
+
+      - name: Start frontend-service
+        working-directory: frontend-service
+        run: |
+          VITE_USE_MSW=false ./node_modules/.bin/vite --host 127.0.0.1 --port 5173 \
+            > ../.tmp/frontend.log 2>&1 &
+          echo $! > ../.tmp/frontend.pid
+
+      # ── Health checks ───────────────────────────────────────────────────────
+
+      - name: Wait for all services
+        run: |
+          wait_for() {
+            local url="$1"
+            local name="$2"
+            local http_status
+            for attempt in $(seq 1 60); do
+              http_status=$(curl --silent --output /dev/null --write-out "%{http_code}" "$url" 2>/dev/null || echo "000")
+              if [ "$http_status" = "200" ]; then
+                echo "$name is ready (attempt $attempt)"
+                return 0
+              fi
+              echo "  [$name] attempt $attempt/60: HTTP $http_status"
+              sleep 2
+            done
+            echo "$name did not start in time (last HTTP: $http_status)"
+            return 1
+          }
+
+          wait_for "http://127.0.0.1:8081/actuator/health" "auth-service"
+          wait_for "http://127.0.0.1:8082/actuator/health" "billing-service"
+          wait_for "http://127.0.0.1:8080/actuator/health" "api-gateway"
+          wait_for "http://127.0.0.1:5173/login" "frontend-service"
+
+      - name: Smoke check login via Vite proxy
+        run: |
+          for attempt in $(seq 1 20); do
+            http_status=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+              -X POST http://127.0.0.1:5173/auth/login \
+              -H "Content-Type: application/json" \
+              -d '{"email":"admin@mail.com","password":"admin123"}')
+            if [ "$http_status" = "200" ]; then
+              echo "Full login chain ready (attempt $attempt)"
+              exit 0
+            fi
+            echo "  [login via Vite] attempt $attempt/20: HTTP $http_status"
+            sleep 3
+          done
+          echo "Full login chain did not become ready in time"
+          exit 1
+
+      # ── Tests ───────────────────────────────────────────────────────────────
+
+      - name: Run Playwright E2E
+        working-directory: e2e
+        env:
+          E2E_BASE_URL: http://127.0.0.1:5173
+        run: npm test
+
+      # ── Diagnóstico y artefactos ────────────────────────────────────────────
+
+      - name: Dump service logs on failure
+        if: failure()
+        run: |
+          echo "::group::auth-service.log (last 150 lines)"
+          tail -n 150 .tmp/auth-service.log 2>/dev/null || echo "(sin log)"
+          echo "::endgroup::"
+          echo "::group::billing-service.log (last 150 lines)"
+          tail -n 150 .tmp/billing-service.log 2>/dev/null || echo "(sin log)"
+          echo "::endgroup::"
+          echo "::group::api-gateway.log (last 150 lines)"
+          tail -n 150 .tmp/api-gateway.log 2>/dev/null || echo "(sin log)"
+          echo "::endgroup::"
+          echo "::group::frontend.log (last 100 lines)"
+          tail -n 100 .tmp/frontend.log 2>/dev/null || echo "(sin log)"
+          echo "::endgroup::"
+          echo "::group::Health check responses"
+          echo "--- auth-service ---"
+          curl -sv http://127.0.0.1:8081/actuator/health 2>&1 || true
+          echo "--- billing-service ---"
+          curl -sv http://127.0.0.1:8082/actuator/health 2>&1 || true
+          echo "--- api-gateway ---"
+          curl -sv http://127.0.0.1:8080/actuator/health 2>&1 || true
+          echo "--- frontend-service ---"
+          curl -sv http://127.0.0.1:5173/login 2>&1 || true
+          echo "::endgroup::"
+
+      - name: Upload E2E artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: |
+            .tmp/*.log
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+
+      - name: Capture Docker Compose logs
+        if: always()
+        run: docker compose -f e2e/docker-compose.ci.yaml logs --no-color > .tmp/docker-compose.log
+
+      - name: Upload Docker Compose logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-docker-logs
+          path: .tmp/docker-compose.log
+          retention-days: 7
+
+      - name: Stop full environment
+        if: always()
+        run: |
+          docker compose -f e2e/docker-compose.ci.yaml down -v --remove-orphans
+          for pid_file in .tmp/auth-service.pid .tmp/billing-service.pid .tmp/api-gateway.pid .tmp/frontend.pid; do
+            [ -f "$pid_file" ] && kill "$(cat "$pid_file")" 2>/dev/null || true
+          done
