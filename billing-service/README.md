@@ -164,7 +164,7 @@ El servicio se levanta en el puerto:
 http://localhost:8082
 ```
 
-Y utiliza la base de datos PostgreSQL `billmate_billing`. Puedes ajustar estos valores desde el archivo:
+Y utiliza la base de datos PostgreSQL `billing_db` (puerto 5433). Puedes ajustar estos valores desde el archivo:
 
 ```
 src/main/resources/application.yaml
@@ -248,6 +248,20 @@ src/test/java/com/billMate/billing/
 Al crear una factura, se publica un evento `InvoiceCreatedEvent` en el topic `invoice.created` de Kafka. La publicación es **asíncrona** (`@Async`) y **no bloquea** el flujo principal — si Kafka no está disponible, la factura se crea igualmente.
 
 - **Broker**: `localhost:29092` (host) / `kafka:9092` (contenedores)
+
+---
+
+## 📈 Observabilidad
+
+- **Correlation ID** (`CorrelationIdFilter`): lee el header `x-Correlation-Id` propagado por el API Gateway y lo coloca en MDC.
+- **Logs JSON estructurados**: `logback-spring.xml` con `LogstashEncoder` (logstash-logback-encoder 7.4). Compatible con el stack Grafana + Loki + Promtail.
+
+```bash
+# Levantar stack de observabilidad
+docker-compose -f ../observability/docker-compose.yaml up -d   # Grafana en http://localhost:3000
+```
+
+Query LogQL de ejemplo en Grafana: `{service="billing"} |= "invoice"`
 - **Kafka UI**: `http://localhost:9090`
 - **Docker Compose**: `kafka/docker-compose.yaml`
 

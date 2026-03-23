@@ -2,7 +2,7 @@ server:
   port: 8081
 
 jwt:
-  secret: gJ1yu5QC/hlLhx9d0tqZxIHH8vioFhmv9XCkUdDAX1Y=
+  secret: ${JWT_SECRET:dGVzdC1vbmx5LXNlY3JldC1ub3QtZm9yLXByb2R1Y3Rpb24tMTIz}
 
 spring:
   application:

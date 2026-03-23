@@ -8,7 +8,7 @@ services:
     uri: ${BILLING_SERVICE_URI:http://localhost:8082}
 
 jwt:
-  secret: gJ1yu5QC/hlLhx9d0tqZxIHH8vioFhmv9XCkUdDAX1Y=
+  secret: ${JWT_SECRET}
 management:
   endpoints:
     web:
