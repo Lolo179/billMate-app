@@ -110,6 +110,7 @@ jobs:
             --spring.datasource.url=jdbc:postgresql://localhost:5434/auth_db \
             --spring.datasource.username=postgres \
             --spring.datasource.password=postgres \
+            --jwt.secret=${{ secrets.JWT_SECRET }} \
             > .tmp/auth-service.log 2>&1 &
           echo $! > .tmp/auth-service.pid
 
@@ -129,6 +130,7 @@ jobs:
         run: |
           java -jar api-gateway/target/*.jar \
             --spring.docker-compose.enabled=false \
+            --jwt.secret=${{ secrets.JWT_SECRET }} \
             > .tmp/api-gateway.log 2>&1 &
           echo $! > .tmp/api-gateway.pid
 

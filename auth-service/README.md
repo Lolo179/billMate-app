@@ -19,9 +19,11 @@ Este módulo se encarga de:
 
 - Java 21 (LTS)
 - Spring Boot 3.3.0
-- Spring Security + JWT
-- PostgreSQL
+- Spring Security + JWT (jjwt 0.11.5, HS256)
+- PostgreSQL 16
 - Maven
+- Testcontainers (tests de integración)
+- logstash-logback-encoder 7.4 (logs JSON estructurados)
 
 ---
 
@@ -33,7 +35,7 @@ El servicio se levanta en el puerto:
 http://localhost:8081
 ```
 
-Y utiliza la base de datos PostgreSQL `billmate_auth`. Puedes ajustar estos valores desde el archivo:
+Y utiliza la base de datos PostgreSQL `auth_db` (puerto 5434). Puedes ajustar estos valores desde el archivo:
 
 ```
 src/main/resources/application.yaml
@@ -99,11 +101,25 @@ El deploy está centralizado en un único workflow a nivel de monorepo que se ac
 
 ## 🧪 Testing
 
+Los tests de integración usan **Testcontainers** (PostgreSQL 16-alpine) para levantar la base de datos en un contenedor efímero. No requieren una instancia PostgreSQL local.
+
 Para ejecutar los tests del servicio:
 
 ```bash
 cd auth-service
 mvn clean verify
+```
+
+---
+
+## 📈 Observabilidad
+
+- **Correlation ID** (`CorrelationIdFilter`): lee el header `x-Correlation-Id` propagado por el API Gateway y lo coloca en MDC para que todos los logs del servicio lo incluyan automáticamente.
+- **Logs JSON estructurados**: `logback-spring.xml` con `LogstashEncoder` (logstash-logback-encoder). Compatible con el stack Grafana + Loki + Promtail del directorio `observability/`.
+
+```bash
+# Levantar el stack de observabilidad centralizada
+docker-compose -f ../observability/docker-compose.yaml up -d   # Grafana en http://localhost:3000
 ```
 
 ---
