@@ -31,6 +31,28 @@ paths:
             minimum: 1
             maximum: 20
             default: 20
+        - name: sort
+          in: query
+          required: false
+          description: "Ordenación. Formato: campo,dirección (ej: name,asc). Campos válidos: name, email, nif, createdAt."
+          schema:
+            type: string
+            default: "createdAt,desc"
+            example: "name,asc"
+        - name: name
+          in: query
+          required: false
+          description: "Filtrar por nombre (búsqueda parcial, insensible a mayúsculas)."
+          schema:
+            type: string
+            example: "Juan"
+        - name: nif
+          in: query
+          required: false
+          description: "Filtrar por NIF exacto."
+          schema:
+            type: string
+            example: "12345678Z"
       responses:
         "200":
           description: Página de clientes
@@ -65,6 +87,15 @@ paths:
       operationId: createClient
       tags: [clients]
       summary: Crear nuevo cliente
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: "UUID único para garantizar idempotencia. Si se envía la misma clave en una segunda llamada, se devuelve la respuesta original sin crear duplicados. TTL: 24h."
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
       requestBody:
         required: true
         content:
@@ -254,7 +285,51 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
-    
+
+    patch:
+      operationId: patchClient
+      tags: [clients]
+      summary: Actualizar parcialmente un cliente (JSON Merge Patch)
+      description: "Actualiza solo los campos incluidos en el body. Los campos ausentes se mantienen sin cambios (RFC 7396)."
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/PatchClientDTO"
+      responses:
+        "200":
+          description: Cliente actualizado parcialmente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientDTO"
+        "400":
+          description: Datos de actualización inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
   /invoices/client/{clientId}:
     get:
       operationId: getInvoicesByClientId
@@ -283,6 +358,38 @@ paths:
             minimum: 1
             maximum: 20
             default: 20
+        - name: sort
+          in: query
+          required: false
+          description: "Ordenación. Formato: campo,dirección (ej: date,asc). Campos válidos: date, total, status, createdAt."
+          schema:
+            type: string
+            default: "createdAt,desc"
+            example: "date,asc"
+        - name: status
+          in: query
+          required: false
+          description: "Filtrar por estado de la factura."
+          schema:
+            type: string
+            enum: [DRAFT, SENT, PAID, CANCELLED]
+            example: "DRAFT"
+        - name: dateFrom
+          in: query
+          required: false
+          description: "Filtrar facturas con fecha mayor o igual a esta (formato: YYYY-MM-DD)."
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: dateTo
+          in: query
+          required: false
+          description: "Filtrar facturas con fecha menor o igual a esta (formato: YYYY-MM-DD)."
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
       responses:
         '200':
           description: Página de facturas del cliente
@@ -337,6 +444,38 @@ paths:
             minimum: 1
             maximum: 20
             default: 20
+        - name: sort
+          in: query
+          required: false
+          description: "Ordenación. Formato: campo,dirección (ej: date,asc). Campos válidos: date, total, status, createdAt."
+          schema:
+            type: string
+            default: "createdAt,desc"
+            example: "date,asc"
+        - name: status
+          in: query
+          required: false
+          description: "Filtrar por estado de la factura."
+          schema:
+            type: string
+            enum: [DRAFT, SENT, PAID, CANCELLED]
+            example: "DRAFT"
+        - name: dateFrom
+          in: query
+          required: false
+          description: "Filtrar facturas con fecha mayor o igual a esta (formato: YYYY-MM-DD)."
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: dateTo
+          in: query
+          required: false
+          description: "Filtrar facturas con fecha menor o igual a esta (formato: YYYY-MM-DD)."
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
       responses:
         '200':
           description: Página de facturas
@@ -361,6 +500,15 @@ paths:
       operationId: createInvoice
       tags: [invoices]
       summary: Crear una nueva factura
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: "UUID único para garantizar idempotencia. Si se envía la misma clave en una segunda llamada, se devuelve la respuesta original sin crear duplicados. TTL: 24h."
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
       requestBody:
         required: true
         content:
@@ -518,7 +666,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiError'
-      
+
+    patch:
+      operationId: patchInvoice
+      tags: [invoices]
+      summary: Actualizar parcialmente una factura (JSON Merge Patch)
+      description: "Actualiza solo los campos incluidos en el body. Solo válido para facturas en estado DRAFT (RFC 7396)."
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: '#/components/schemas/PatchInvoiceDTO'
+      responses:
+        '200':
+          description: Factura actualizada parcialmente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceDTO'
+        '400':
+          description: Datos inválidos o factura no está en estado DRAFT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Factura no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
   /invoices/{invoiceId}/emit:
     put:
       operationId: emitInvoice
@@ -889,4 +1081,53 @@ components:
           format: double
           readOnly: true
           example: 500.00
+
+    PatchClientDTO:
+      type: object
+      description: "DTO para actualización parcial de cliente (RFC 7396 JSON Merge Patch). Solo los campos presentes en el body serán actualizados."
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "Juan Pérez"
+        email:
+          type: string
+          format: email
+          example: "juanperez@mail.com"
+        phone:
+          type: string
+          maxLength: 20
+          example: "+34 600 123 456"
+        nif:
+          type: string
+          minLength: 9
+          maxLength: 9
+          pattern: '^\d{8}[A-Z]$'
+          example: "12345678Z"
+        address:
+          type: string
+          example: "Calle Falsa 123, Madrid"
+
+    PatchInvoiceDTO:
+      type: object
+      description: "DTO para actualización parcial de factura (RFC 7396 JSON Merge Patch). Solo válido en estado DRAFT. Solo los campos presentes en el body serán actualizados."
+      properties:
+        clientId:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 3
+        date:
+          type: string
+          format: date
+          example: "2025-06-01"
+        description:
+          type: string
+          maxLength: 255
+          example: "Proyecto web actualizado"
+        invoiceLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLine'
 

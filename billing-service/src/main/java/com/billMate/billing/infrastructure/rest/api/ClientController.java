@@ -2,11 +2,17 @@ package com.billMate.billing.infrastructure.rest.api;
 
 import com.billMate.billing.domain.client.model.Client;
 import com.billMate.billing.domain.client.port.in.*;
+import com.billMate.billing.domain.client.port.in.PatchClientUseCase;
+import com.billMate.billing.domain.client.port.in.command.PatchClientCommand;
+import com.billMate.billing.domain.client.port.in.query.ClientSearchQuery;
 import com.billMate.billing.domain.shared.PageResult;
 import com.billMate.billing.infrastructure.rest.dto.ClientDTO;
 import com.billMate.billing.infrastructure.rest.dto.ClientPageDTO;
 import com.billMate.billing.infrastructure.rest.dto.NewClientDTO;
+import com.billMate.billing.infrastructure.rest.dto.PatchClientDTO;
 import com.billMate.billing.infrastructure.rest.mapper.ClientRestMapper;
+
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +33,11 @@ public class ClientController implements ClientsApi {
     private final GetAllClientsUseCase getAllClientsUseCase;
     private final UpdateClientUseCase updateClientUseCase;
     private final DeleteClientUseCase deleteClientUseCase;
+    private final PatchClientUseCase patchClientUseCase;
     private final ClientRestMapper clientRestMapper;
 
     @Override
-    public ResponseEntity<ClientDTO> createClient(NewClientDTO newClientDTO) {
+    public ResponseEntity<ClientDTO> createClient(NewClientDTO newClientDTO, UUID idempotencyKey) {
         log.info(">> POST /clients", kv("nif", newClientDTO.getNif()));
         CreateClientCommand command = clientRestMapper.toCreateCommand(newClientDTO);
         Client client = createClientUseCase.execute(command);
@@ -47,12 +54,12 @@ public class ClientController implements ClientsApi {
     }
 
     @Override
-    public ResponseEntity<ClientPageDTO> getClients(Integer page, Integer size) {
-        int requestedPage = page != null ? page : 0;
-        int requestedSize = size != null ? size : 20;
-
-        log.info(">> GET /clients", kv("page", requestedPage), kv("size", requestedSize));
-        PageResult<Client> clients = getAllClientsUseCase.execute(requestedPage, requestedSize);
+    public ResponseEntity<ClientPageDTO> getClients(Integer page, Integer size, String sort,
+                                                    String name, String nif) {
+        log.info(">> GET /clients", kv("page", page), kv("size", size), kv("sort", sort),
+                kv("name", name), kv("nif", nif));
+        ClientSearchQuery query = clientRestMapper.toSearchQuery(page, size, sort, name, nif);
+        PageResult<Client> clients = getAllClientsUseCase.execute(query);
 
         ClientPageDTO response = new ClientPageDTO();
         response.setItems(clients.items().stream().map(clientRestMapper::toDto).collect(Collectors.toList()));
@@ -63,6 +70,15 @@ public class ClientController implements ClientsApi {
 
         log.info("<< GET /clients", kv("count", response.getItems().size()), kv("totalElements", response.getTotalElements()));
         return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<ClientDTO> patchClient(Long clientId, PatchClientDTO patchClientDTO) {
+        log.info(">> PATCH /clients/{id}", kv("clientId", clientId));
+        PatchClientCommand command = clientRestMapper.toPatchCommand(clientId, patchClientDTO);
+        Client client = patchClientUseCase.execute(command);
+        log.info("<< PATCH /clients/{id}", kv("clientId", clientId));
+        return ResponseEntity.ok(clientRestMapper.toDto(client));
     }
 
     @Override

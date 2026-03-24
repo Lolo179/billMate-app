@@ -12,6 +12,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -120,6 +121,29 @@ public class GlobalExceptionHandler {
                                 .timestamp(OffsetDateTime.now());
 
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(apiError);
+        }
+
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+                log.warn("Invalid argument", kv("exception", ex.getClass().getSimpleName()), kv("error", ex.getMessage()));
+                ApiError error = new ApiError()
+                                .status(HttpStatus.BAD_REQUEST.name())
+                                .code(HttpStatus.BAD_REQUEST.value())
+                                .message(ErrorMessages.INVALID_PARAMETER)
+                                .errors(List.of(ex.getMessage()))
+                                .timestamp(OffsetDateTime.now());
+                return ResponseEntity.badRequest().body(error);
+        }
+
+        @ExceptionHandler(MaxUploadSizeExceededException.class)
+        public ResponseEntity<ApiError> handlePayloadTooLarge(MaxUploadSizeExceededException ex) {
+                log.warn("Payload too large", kv("exception", ex.getClass().getSimpleName()));
+                ApiError error = new ApiError()
+                                .status(HttpStatus.PAYLOAD_TOO_LARGE.name())
+                                .code(HttpStatus.PAYLOAD_TOO_LARGE.value())
+                                .message(ErrorMessages.PAYLOAD_TOO_LARGE)
+                                .timestamp(OffsetDateTime.now());
+                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
         }
 
 }

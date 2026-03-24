@@ -9,6 +9,8 @@ import com.billMate.billing.infrastructure.rest.dto.ApiError;
 import com.billMate.billing.infrastructure.rest.dto.ClientDTO;
 import com.billMate.billing.infrastructure.rest.dto.ClientPageDTO;
 import com.billMate.billing.infrastructure.rest.dto.NewClientDTO;
+import com.billMate.billing.infrastructure.rest.dto.PatchClientDTO;
+import java.util.UUID;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import jakarta.annotation.Generated;
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-16T17:18:40.793224800+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-24T22:56:18.482070300+01:00[Europe/Madrid]")
 @Validated
 @Tag(name = "clients", description = "Endpoints para gestión de clientes")
 public interface ClientsApi {
@@ -44,6 +46,7 @@ public interface ClientsApi {
      * POST /clients : Crear nuevo cliente
      *
      * @param newClientDTO  (required)
+     * @param idempotencyKey UUID único para garantizar idempotencia. Si se envía la misma clave en una segunda llamada, se devuelve la respuesta original sin crear duplicados. TTL: 24h. (optional)
      * @return Cliente creado (status code 201)
      *         or Petición mal formada (status code 400)
      *         or Error interno del servidor (status code 500)
@@ -72,7 +75,8 @@ public interface ClientsApi {
     )
     
     ResponseEntity<ClientDTO> createClient(
-        @Parameter(name = "NewClientDTO", description = "", required = true) @Valid @RequestBody NewClientDTO newClientDTO
+        @Parameter(name = "NewClientDTO", description = "", required = true) @Valid @RequestBody NewClientDTO newClientDTO,
+        @Parameter(name = "Idempotency-Key", description = "UUID único para garantizar idempotencia. Si se envía la misma clave en una segunda llamada, se devuelve la respuesta original sin crear duplicados. TTL: 24h.", in = ParameterIn.HEADER) @RequestHeader(value = "Idempotency-Key", required = false) UUID idempotencyKey
     );
 
 
@@ -165,6 +169,9 @@ public interface ClientsApi {
      *
      * @param page  (optional, default to 0)
      * @param size  (optional, default to 20)
+     * @param sort Ordenación. Formato: campo,dirección (ej: name,asc). Campos válidos: name, email, nif, createdAt. (optional, default to createdAt,desc)
+     * @param name Filtrar por nombre (búsqueda parcial, insensible a mayúsculas). (optional)
+     * @param nif Filtrar por NIF exacto. (optional)
      * @return Página de clientes (status code 200)
      *         or Petición mal formada (status code 400)
      *         or Error interno del servidor (status code 500)
@@ -193,7 +200,54 @@ public interface ClientsApi {
     
     ResponseEntity<ClientPageDTO> getClients(
         @Min(0) @Parameter(name = "page", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size
+        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+        @Parameter(name = "sort", description = "Ordenación. Formato: campo,dirección (ej: name,asc). Campos válidos: name, email, nif, createdAt.", in = ParameterIn.QUERY) @Valid @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String sort,
+        @Parameter(name = "name", description = "Filtrar por nombre (búsqueda parcial, insensible a mayúsculas).", in = ParameterIn.QUERY) @Valid @RequestParam(value = "name", required = false) String name,
+        @Parameter(name = "nif", description = "Filtrar por NIF exacto.", in = ParameterIn.QUERY) @Valid @RequestParam(value = "nif", required = false) String nif
+    );
+
+
+    /**
+     * PATCH /clients/{clientId} : Actualizar parcialmente un cliente (JSON Merge Patch)
+     * Actualiza solo los campos incluidos en el body. Los campos ausentes se mantienen sin cambios (RFC 7396).
+     *
+     * @param clientId  (required)
+     * @param patchClientDTO  (required)
+     * @return Cliente actualizado parcialmente (status code 200)
+     *         or Datos de actualización inválidos (status code 400)
+     *         or Cliente no encontrado (status code 404)
+     *         or Error interno del servidor (status code 500)
+     */
+    @Operation(
+        operationId = "patchClient",
+        summary = "Actualizar parcialmente un cliente (JSON Merge Patch)",
+        description = "Actualiza solo los campos incluidos en el body. Los campos ausentes se mantienen sin cambios (RFC 7396).",
+        tags = { "clients" },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Cliente actualizado parcialmente", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = ClientDTO.class))
+            }),
+            @ApiResponse(responseCode = "400", description = "Datos de actualización inválidos", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Cliente no encontrado", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+            })
+        }
+    )
+    @RequestMapping(
+        method = RequestMethod.PATCH,
+        value = "/clients/{clientId}",
+        produces = { "application/json" },
+        consumes = { "application/merge-patch+json" }
+    )
+    
+    ResponseEntity<ClientDTO> patchClient(
+        @Parameter(name = "clientId", description = "", required = true, in = ParameterIn.PATH) @PathVariable("clientId") Long clientId,
+        @Parameter(name = "PatchClientDTO", description = "", required = true) @Valid @RequestBody PatchClientDTO patchClientDTO
     );
 
 

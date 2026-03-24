@@ -5,6 +5,11 @@ spring:
   application:
     name: billing
 
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 1MB
+
   docker:
     compose:
       enabled: true
