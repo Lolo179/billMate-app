@@ -45,6 +45,9 @@ public class ClientControllerTest {
     private DeleteClientUseCase deleteClientUseCase;
 
     @MockBean
+    private PatchClientUseCase patchClientUseCase;
+
+    @MockBean
     private ClientRestMapper clientRestMapper;
 
     @Test

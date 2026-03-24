@@ -14,8 +14,13 @@ com.billMate.billing
 │   ├── client/
 │   │   ├── model/Client.java           # Validación en constructor + setters
 │   │   └── port/
-│   │       ├── in/                     # Use cases + Commands (records)
-│   │       └── out/ClientRepositoryPort.java  # findAll(page, size) → PageResult<Client>
+│   │       ├── in/                     # Use cases + Commands + Queries
+│   │       │   ├── command/
+│   │       │   │   ├── PatchClientCommand.java   # record con Optional<> por campo
+│   │       │   │   └── CreateClientCommand.java, UpdateClientCommand.java
+│   │       │   └── query/
+│   │       │       └── ClientSearchQuery.java    # record (page, size, sortField, sortDir, name, nif)
+│   │       └── out/ClientRepositoryPort.java  # search(ClientSearchQuery) → PageResult<Client>
 │   └── invoice/
 │       ├── model/
 │       │   ├── Invoice.java            # recalculateTotal()
@@ -23,16 +28,33 @@ com.billMate.billing
 │       │   └── InvoiceStatus.java      # DRAFT, SENT, PAID, CANCELLED
 │       ├── event/InvoiceCreatedEvent.java  # Evento de dominio (record)
 │       └── port/
-│           ├── in/                     # Use cases + Commands
+│           ├── in/                     # Use cases + Commands + Queries
+│           │   ├── command/
+│           │   │   └── PatchInvoiceCommand.java  # record con Optional<> por campo + inner LineCommand
+│           │   └── query/
+│           │       └── InvoiceSearchQuery.java   # record (page, size, sortField, sortDir, status, dateFrom, dateTo, clientId)
 │           └── out/
-│               ├── InvoiceRepositoryPort.java  # findAll(page, size) → PageResult<Invoice>
+│               ├── InvoiceRepositoryPort.java  # search(InvoiceSearchQuery) → PageResult<Invoice>
 │               ├── InvoiceEventPublisherPort.java
 │               └── PdfGeneratorPort.java
 ├── application/useCase/                 # @Service, constructor explícito
 │   ├── CreateClientService.java
+│   ├── GetAllClientsService.java        # sort whitelist + delega en ClientSearchQuery
+│   ├── GetAllInvoicesService.java       # sort whitelist + delega en InvoiceSearchQuery
+│   ├── GetInvoicesByClientService.java  # valida que el cliente exista
+│   ├── PatchClientService.java          # aplica Optional.ifPresent() por campo
+│   ├── PatchInvoiceService.java         # valida DRAFT, aplica parches, recalcula total
 │   └── ...                             # Un service por use case
 └── infrastructure/
-    ├── config/JpaConfiguration.java
+    ├── config/
+    │   ├── JpaConfiguration.java
+    │   ├── IdempotencyConfig.java       # Registra IdempotencyFilter
+    │   └── WebConfig.java              # ShallowEtagHeaderFilter (ETag automático)
+    ├── idempotency/
+    │   ├── IdempotencyRecord.java       # record (status, body, contentType)
+    │   ├── IdempotencyStore.java        # interfaz get/save
+    │   ├── CaffeineIdempotencyStore.java # TTL 24h, máx 10.000 entradas
+    │   └── IdempotencyFilter.java       # OncePerRequestFilter solo para POST
     ├── kafka/adapter/InvoiceKafkaAdapter.java  # @Async — implementa InvoiceEventPublisherPort
     ├── pdf/
     │   ├── StyledPdfGeneratorAdapter.java  # @Primary — PDF con diseño corporativo (activo)
@@ -41,12 +63,13 @@ com.billMate.billing
     │   ├── adapter/                    # @Component — implementan puertos de salida
     │   ├── entity/                     # @Entity + Lombok
     │   ├── mapper/                     # @Component — toDomain(), toEntity()
-    │   └── repository/                 # Spring Data JPA
+    │   ├── repository/                 # Spring Data JPA + JpaSpecificationExecutor
+    │   └── specification/              # ClientSpecifications, InvoiceSpecifications (filtros dinámicos)
     └── rest/
         ├── api/                        # Controllers (implementan interfaces OpenAPI)
         ├── dto/                        # ⚠️ GENERADOS por OpenAPI — NO EDITAR
         ├── error/                      # GlobalExceptionHandler + ErrorMessages
-        └── mapper/                     # @Component — toDto(), toCreateCommand()
+        └── mapper/                     # @Component — toDto(), toCreateCommand(), toSearchQuery(), toPatchCommand()
 ```
 
 ## Reglas por Capa
@@ -57,10 +80,16 @@ com.billMate.billing
 - Setters de campos obligatorios también validan
 - Use cases: interfaz con un solo método `execute()`
 - Commands: Java `record` con validación en compact constructor
+- **Query records** en `port/in/query/`: transportan los parámetros de búsqueda/paginación al use case
+  - `ClientSearchQuery(int page, int size, String sortField, String sortDir, String name, String nif)`
+  - `InvoiceSearchQuery(int page, int size, String sortField, String sortDir, InvoiceStatus status, LocalDate dateFrom, LocalDate dateTo, Long clientId)`
+- **Patch commands** en `port/in/command/` con `Optional<T>` por campo:
+  - `null` en el DTO → `Optional.empty()` → el campo NO se actualiza
+  - valor presente → `Optional.of(v)` → el campo SÍ se actualiza
 - Eventos de dominio: Java `record` en `domain/*/event/` (ej: `InvoiceCreatedEvent`)
 - Puertos de salida: interfaces que operan con modelos de dominio (nunca entidades JPA)
 - `PageResult<T>`: record genérico en `domain/shared/` para respuestas paginadas — `(List<T> items, int page, int size, long totalElements, int totalPages)`
-- Puertos de listado usan paginación: `findAll(int page, int size)` → `PageResult<T>`, `execute(Long clientId, int page, int size)` → `PageResult<Invoice>`
+- **Puertos de búsqueda** usan query records: `search(ClientSearchQuery)` → `PageResult<Client>`, `search(InvoiceSearchQuery)` → `PageResult<Invoice>`
 
 ### Aplicación (`application/useCase/`)
 - `@Service` de Spring
@@ -77,6 +106,30 @@ com.billMate.billing
 - Entidades: `@Entity` + `@Table(name = "...")` explícito
 - PDF: `StyledPdfGeneratorAdapter` (`@Primary`) es la implementación activa — PDF con diseño corporativo (colores, tabla de líneas, sumas). `PdfGeneratorAdapter` permanece como fallback.
 
+#### Especificaciones JPA (`persistence/specification/`)
+- `ClientSpecifications.build(ClientSearchQuery)` → predicados ILIKE name + NIF exacto
+- `InvoiceSpecifications.build(InvoiceSearchQuery)` → predicados clientId, status, dateFrom, dateTo
+- Usados por los adaptadores JPA via `JpaSpecificationExecutor<T>`
+
+#### Paginación en Adaptadores JPA (estrategia 2 pasos para Invoice)
+Para evitar la advertencia Hibernate HHH90003004 con colecciones FETCH + paginación:
+1. `findAll(spec, pageable)` — sin JOIN FETCH, para paginación limpia y count correcto
+2. `findAllByInvoiceIdInWithLines(ids)` — con JOIN FETCH para cargar lines en memoria
+3. Reordenar preservando el orden de la página
+
+#### Filtros de Infraestructura (`infrastructure/idempotency/`)
+- **Idempotencia HTTP**: `IdempotencyFilter extends OncePerRequestFilter` — solo aplica a POST con cabecera `Idempotency-Key`
+  - Valida que el valor sea UUID bien formado → 400 si no
+  - Si la clave existe en caché → reproduce la respuesta almacenada sin re-ejecutar el handler
+  - Si la clave es nueva → ejecuta el handler, cachea respuestas 2xx con `ContentCachingResponseWrapper`
+- **Cache**: `CaffeineIdempotencyStore` — TTL 24h, máximo 10.000 entradas (in-memory)
+- **Registrado via**: `FilterRegistrationBean` en `IdempotencyConfig`
+
+#### ETag (`infrastructure/config/WebConfig`)
+- `ShallowEtagHeaderFilter` — añade cabecera `ETag` (MD5 del cuerpo) a todas las respuestas
+- El cliente puede enviar `If-None-Match` para recibir `304 Not Modified` sin cuerpo
+- No requiere cambios en controllers
+
 ## Contract-First (OpenAPI)
 
 - Contrato: `contract/contract-billing.yaml` (OpenAPI 3.0.1)
@@ -85,13 +138,47 @@ com.billMate.billing
 - Regenerar: `mvn clean compile`
 - **NUNCA editar manualmente** archivos en `rest/dto/` ni interfaces `*Api`
 
+### Endpoints REST
+
+| Método | Ruta | Descripción | Notas |
+|---|---|---|---|
+| `GET` | `/clients` | Lista clientes paginada | `page`, `size`, `sort`, `name`, `nif` |
+| `POST` | `/clients` | Crear cliente | `Idempotency-Key` header (UUID, opcional) |
+| `GET` | `/clients/{id}` | Obtener cliente | — |
+| `PUT` | `/clients/{id}` | Reemplazar cliente | — |
+| `PATCH` | `/clients/{id}` | Actualización parcial | `application/merge-patch+json` |
+| `DELETE` | `/clients/{id}` | Eliminar cliente | — |
+| `GET` | `/invoices` | Lista facturas paginada | `page`, `size`, `sort`, `status`, `dateFrom`, `dateTo` |
+| `POST` | `/invoices` | Crear factura | `Idempotency-Key` header (UUID, opcional) |
+| `GET` | `/invoices/{id}` | Obtener factura | — |
+| `PUT` | `/invoices/{id}` | Reemplazar factura | — |
+| `PATCH` | `/invoices/{id}` | Actualización parcial | Solo facturas `DRAFT` |
+| `DELETE` | `/invoices/{id}` | Eliminar factura | — |
+| `GET` | `/invoices/client/{clientId}` | Facturas de un cliente | Mismos query params que GET /invoices |
+| `PUT` | `/invoices/{id}/emit` | Emitir factura → PDF | `DRAFT → SENT` |
+| `PUT` | `/invoices/{id}/pay` | Marcar como pagada | `SENT → PAID` |
+| `GET` | `/invoices/{id}/pdf` | Descargar PDF | Solo `SENT` o `PAID` |
+
+### Parámetro `sort`
+
+Formato: `campo,direccion` (ej: `name,asc`, `createdAt,desc`). Validado contra whitelist en el service de aplicación → `IllegalArgumentException` → 400 si campo no permitido.
+
+| Entidad | Campos permitidos |
+|---|---|
+| Client | `name`, `email`, `nif`, `createdAt` |
+| Invoice | `date`, `total`, `status`, `createdAt` |
+
 ## Flujo de Datos en Controller
 
 ```
-Request → DTO → RestMapper.toCommand() → UseCase.execute() → Dominio → RestMapper.toDto() → Response
+Request → DTO + params → RestMapper.toSearchQuery()/toPatchCommand()/toCreateCommand()
+        → UseCase.execute(query/command)
+        → Dominio
+        → RestMapper.toDto()
+        → Response
 ```
 
-- HTTP 201 para creación, 200 para consultas/updates, 204 para deletes
+- HTTP 201 para creación, 200 para consultas/updates/patch, 204 para deletes
 
 ## Máquina de Estados de Facturas
 
@@ -115,10 +202,12 @@ DRAFT → CANCELLED
 | `MethodArgumentNotValidException` | 400 |
 | `ConstraintViolationException` | 400 |
 | `HttpMessageNotReadableException` | 400 |
-| `IllegalStateException` | 400 |
+| `IllegalArgumentException` | 400 (sort inválido, estado inválido, UUID inválido) |
+| `IllegalStateException` | 400 (transición de estado inválida) |
+| `MaxUploadSizeExceededException` | 413 (payload > 1 MB) |
 | `Exception` | 500 |
 
-Mensajes constantes en `ErrorMessages.java` (en español).
+Mensajes constantes en `ErrorMessages.java` (en español). Límite de payload configurado en `application.yaml` (`max-request-size: 1MB`).
 
 ## Base de Datos
 
@@ -181,16 +270,16 @@ class CreateClientServiceTest {
         private final List<Client> savedClients = new ArrayList<>();
         private long idSequence = 1;
         private int saveCount = 0;
-        // ... implementa save, findById, findAll, deleteById, existsById
+        // ... implementa save, findById, search, deleteById, existsById
         public int getSaveCount() { return saveCount; }
 
         @Override
-        public PageResult<Client> findAll(int page, int size) {
-            int from = page * size;
-            int to = Math.min(from + size, savedClients.size());
+        public PageResult<Client> search(ClientSearchQuery query) {
+            int from = query.page() * query.size();
+            int to = Math.min(from + query.size(), savedClients.size());
             List<Client> slice = from >= savedClients.size() ? List.of() : savedClients.subList(from, to);
-            int totalPages = size == 0 ? 0 : (int) Math.ceil((double) savedClients.size() / size);
-            return new PageResult<>(slice, page, size, savedClients.size(), totalPages);
+            int totalPages = query.size() == 0 ? 0 : (int) Math.ceil((double) savedClients.size() / query.size());
+            return new PageResult<>(slice, query.page(), query.size(), savedClients.size(), totalPages);
         }
     }
 }
@@ -212,6 +301,7 @@ class CreateClientServiceTest {
 public class ClientControllerTest {
     @Autowired private MockMvc mockMvc;
     @MockBean private CreateClientUseCase createClientUseCase;
+    @MockBean private PatchClientUseCase patchClientUseCase;  // ← incluir siempre
     @MockBean private ClientRestMapper clientRestMapper;
     // ... @MockBean para cada use case + mapper
 
@@ -228,7 +318,8 @@ public class ClientControllerTest {
 
 **Reglas:**
 - Nombre: `given{Contexto}_when{Acción}_then{Resultado}`
-- `@MockBean` para cada use case + mapper
+- `@MockBean` para **cada** use case inyectado en el controller (incluyendo `PatchClientUseCase` / `PatchInvoiceUseCase`)
+- Si el controller llama a `mapper.toSearchQuery(...)`, mockear también ese método
 - JSON bodies con text blocks (Java 21)
 - Secciones: `// Given`, `// When & Then`
 

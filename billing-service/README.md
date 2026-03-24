@@ -28,19 +28,20 @@ El núcleo de la aplicación, sin dependencias a frameworks ni infraestructura:
 - **Modelos**: `Client`, `Invoice`, `InvoiceLineItem`, `InvoiceStatus`
 - **Paginación**: `PageResult<T>` — record genérico en `domain/shared/` con `items`, `page`, `size`, `totalElements`, `totalPages`
 - **Puertos de entrada (in)**: interfaces de casos de uso que definen las operaciones del sistema
-  - `CreateClientUseCase`, `GetClientUseCase`, `GetAllClientsUseCase`, `UpdateClientUseCase`, `DeleteClientUseCase`
-  - `CreateInvoiceUseCase`, `GetInvoiceUseCase`, `GetAllInvoicesUseCase`, `GetInvoicesByClientUseCase`, `UpdateInvoiceUseCase`, `DeleteInvoiceUseCase`, `EmitInvoiceUseCase`, `DownloadInvoicePdfUseCase`, `PayInvoiceUseCase`
-- **Commands**: `CreateClientCommand`, `UpdateClientCommand`, `CreateInvoiceCommand`, `UpdateInvoiceCommand`
+  - `CreateClientUseCase`, `GetClientUseCase`, `GetAllClientsUseCase`, `UpdateClientUseCase`, `PatchClientUseCase`, `DeleteClientUseCase`
+  - `CreateInvoiceUseCase`, `GetInvoiceUseCase`, `GetAllInvoicesUseCase`, `GetInvoicesByClientUseCase`, `UpdateInvoiceUseCase`, `PatchInvoiceUseCase`, `DeleteInvoiceUseCase`, `EmitInvoiceUseCase`, `DownloadInvoicePdfUseCase`, `PayInvoiceUseCase`
+- **Commands**: `CreateClientCommand`, `UpdateClientCommand`, `PatchClientCommand` (Optional fields), `CreateInvoiceCommand`, `UpdateInvoiceCommand`, `PatchInvoiceCommand` (Optional fields)
+- **Queries** (en `port/in/query/`): `ClientSearchQuery`, `InvoiceSearchQuery` — transportan parámetros de paginación, sort y filtros
 - **Puertos de salida (out)**: `ClientRepositoryPort`, `InvoiceRepositoryPort`, `PdfGeneratorPort`, `InvoiceEventPublisherPort`
 
-> Los puertos de listado son paginados: `findAll(int page, int size) → PageResult<T>` y `GetInvoicesByClientUseCase.execute(Long clientId, int page, int size) → PageResult<Invoice>`.
+> Los puertos de búsqueda usan query objects: `search(ClientSearchQuery) → PageResult<Client>`, `search(InvoiceSearchQuery) → PageResult<Invoice>`.
 
 ### Aplicación (`application/useCase/`)
 
 Implementaciones de los casos de uso, que orquestan la lógica de dominio:
 
-- `CreateClientService`, `GetClientService`, `GetAllClientsService`, `UpdateClientService`, `DeleteClientService`
-- `CreateInvoiceService`, `GetInvoiceService`, `GetAllInvoicesService`, `GetInvoicesByClientService`, `UpdateInvoiceService`, `DeleteInvoiceService`, `EmitInvoiceService`, `DownloadInvoicePdfService`, `PayInvoiceService`
+- `CreateClientService`, `GetClientService`, `GetAllClientsService`, `UpdateClientService`, `PatchClientService`, `DeleteClientService`
+- `CreateInvoiceService`, `GetInvoiceService`, `GetAllInvoicesService`, `GetInvoicesByClientService`, `UpdateInvoiceService`, `PatchInvoiceService`, `DeleteInvoiceService`, `EmitInvoiceService`, `DownloadInvoicePdfService`, `PayInvoiceService`
 
 > Solo dependen de puertos de dominio, nunca de infraestructura.
 
@@ -49,11 +50,14 @@ Implementaciones de los casos de uso, que orquestan la lógica de dominio:
 Adaptadores que conectan el dominio con el mundo exterior:
 
 - **REST** (`rest/api/`): `ClientController`, `InvoiceController` — implementan las interfaces OpenAPI generadas
-- **Mappers REST** (`rest/mapper/`): `ClientRestMapper`, `InvoiceRestMapper` — convierten entre modelos de dominio y DTOs
+- **Mappers REST** (`rest/mapper/`): `ClientRestMapper`, `InvoiceRestMapper` — convierten entre modelos de dominio y DTOs. Incluyen `toSearchQuery()` y `toPatchCommand()`
 - **Persistencia** (`persistence/adapter/`): `ClientJpaAdapter`, `InvoiceJpaAdapter` — implementan los puertos de salida
 - **Mappers Persistencia** (`persistence/mapper/`): `ClientPersistenceMapper`, `InvoicePersistenceMapper` — convierten entre modelos de dominio y entidades JPA
+- **Especificaciones JPA** (`persistence/specification/`): `ClientSpecifications`, `InvoiceSpecifications` — filtros dinámicos para búsquedas
 - **PDF** (`pdf/`): `StyledPdfGeneratorAdapter` (`@Primary`) — generador activo con diseño corporativo (colores, tabla de líneas); `PdfGeneratorAdapter` como fallback
 - **Kafka** (`kafka/adapter/`): `InvoiceKafkaAdapter` (`@Async`) — implementa `InvoiceEventPublisherPort`
+- **Idempotencia** (`idempotency/`): `IdempotencyFilter` + `CaffeineIdempotencyStore` — cacheado de respuestas POST
+- **Config** (`config/`): `JpaConfiguration`, `WebConfig` (ETag via `ShallowEtagHeaderFilter`), `IdempotencyConfig` (registro del filtro)
 
 ### Diagrama de Dependencias
 
@@ -108,27 +112,36 @@ billing-service/
 │   │   ├── client/
 │   │   │   ├── model/Client.java
 │   │   │   └── port/
-│   │   │       ├── in/                # Use case interfaces + Commands
+│   │   │       ├── in/
+│   │   │       │   ├── command/       # CreateClientCommand, UpdateClientCommand, PatchClientCommand
+│   │   │       │   └── query/        # ClientSearchQuery
 │   │   │       └── out/               # ClientRepositoryPort
 │   │   └── invoice/
 │   │       ├── model/                 # Invoice, InvoiceLineItem, InvoiceStatus
 │   │       ├── event/                 # InvoiceCreatedEvent (record)
 │   │       └── port/
-│   │           ├── in/                # Use case interfaces + Commands
+│   │           ├── in/
+│   │           │   ├── command/       # CreateInvoiceCommand, UpdateInvoiceCommand, PatchInvoiceCommand
+│   │           │   └── query/        # InvoiceSearchQuery
 │   │           └── out/               # InvoiceRepositoryPort, PdfGeneratorPort, InvoiceEventPublisherPort
 │   └── shared/
 │       └── PageResult.java            # Record genérico de paginación (items, page, size, totalElements, totalPages)
 │   ├── application/
 │   │   └── useCase/                   # Implementaciones de use cases
 │   └── infrastructure/
-│       ├── config/                    # JpaConfiguration
+│       ├── config/
+│       │   ├── JpaConfiguration.java
+│       │   ├── IdempotencyConfig.java  # Registra IdempotencyFilter (POST /clients, /invoices)
+│       │   └── WebConfig.java         # ShallowEtagHeaderFilter (ETag automático en GET)
+│       ├── idempotency/               # IdempotencyRecord, IdempotencyStore, CaffeineIdempotencyStore, IdempotencyFilter
 │       ├── kafka/adapter/             # InvoiceKafkaAdapter (@Async)
 │       ├── pdf/                       # StyledPdfGeneratorAdapter (@Primary), PdfGeneratorAdapter
 │       ├── persistence/
 │       │   ├── adapter/               # ClientJpaAdapter, InvoiceJpaAdapter
 │       │   ├── entity/                # ClientEntity, InvoiceEntity, InvoiceLineEntity
 │       │   ├── mapper/                # ClientPersistenceMapper, InvoicePersistenceMapper
-│       │   └── repository/            # SpringDataClientRepository, SpringDataInvoiceRepository
+│       │   ├── repository/            # SpringDataClientRepository, SpringDataInvoiceRepository
+│       │   └── specification/         # ClientSpecifications, InvoiceSpecifications (filtros dinámicos)
 │       └── rest/
 │           ├── api/                   # ClientController, InvoiceController
 │           ├── dto/                   # DTOs generados por OpenAPI
@@ -146,11 +159,12 @@ billing-service/
 
 - Java 21 (LTS)
 - Spring Boot 3.3.0
-- Spring Data JPA
-- PostgreSQL
+- Spring Data JPA + JPA Specifications
+- PostgreSQL 16
 - Apache Kafka 3.8.0 (KRaft) + Spring Kafka
-- OpenAPI / Swagger
-- iText (generación de PDF)
+- OpenAPI Generator 7.3.0 (contract-first)
+- iText 5.5.13.3 (generación de PDF)
+- Caffeine (caché in-memory para idempotencia)
 - Maven
 - Lombok
 
@@ -172,7 +186,66 @@ src/main/resources/application.yaml
 
 ---
 
-## 🚀 Compilar y Generar Clases desde el Contrato
+## � Principios REST Implementados
+
+### Paginación con Sort + Filtros (`GET /clients`, `GET /invoices`)
+
+Parámetros de query soportados:
+
+| Param | Endpoints | Descripción |
+|---|---|---|
+| `page` | todos los GET paginados | Número de página (0-indexed) |
+| `size` | todos los GET paginados | Tamaño de página |
+| `sort` | todos los GET paginados | `campo,direccion` (ej: `name,asc`, `createdAt,desc`) |
+| `name` | `GET /clients` | Filtro por nombre (contiene, case-insensitive) |
+| `nif` | `GET /clients` | Filtro por NIF exacto |
+| `status` | `GET /invoices`, `GET /invoices/client/{id}` | Filtro por estado (`DRAFT`, `SENT`, `PAID`, `CANCELLED`) |
+| `dateFrom` | `GET /invoices`, `GET /invoices/client/{id}` | Filtro por fecha desde (`yyyy-MM-dd`) |
+| `dateTo` | `GET /invoices`, `GET /invoices/client/{id}` | Filtro por fecha hasta (`yyyy-MM-dd`) |
+
+El parámetro `sort` se valida contra una whitelist en el service de aplicación — campo inválido → `IllegalArgumentException` → 400.
+
+### PATCH — Actualización Parcial (RFC 7396)
+
+- `PATCH /clients/{id}` — actualiza solo los campos presentes en el body
+- `PATCH /invoices/{id}` — solo permitido en facturas en estado `DRAFT`
+- Semántica: `null` o campo ausente = no modificar; valor presente = actualizar
+
+```json
+// Ejemplo: solo cambiar el nombre del cliente
+PATCH /clients/1
+Content-Type: application/merge-patch+json
+
+{ "name": "Nuevo Nombre" }
+```
+
+### Idempotencia en POST
+
+Header opcional en `POST /clients` y `POST /invoices`:
+
+```
+Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000
+```
+
+- UUID bien formado → 400 si el formato es inválido
+- Si la clave ya existe en caché → reproduce la respuesta original sin re-ejecutar la lógica
+- Si es nueva → ejecuta normalmente y cachea la respuesta 2xx
+- **Caché**: Caffeine, TTL 24 horas, máximo 10.000 entradas (in-memory)
+
+### ETag en GET
+
+- `ShallowEtagHeaderFilter` añade automáticamente la cabecera `ETag` (MD5 del body) a todas las respuestas
+- El cliente puede usar `If-None-Match: "<etag>"` para recibir `304 Not Modified` sin cuerpo
+- No requiere cambios en los controllers
+
+### Límite de Payload
+
+- Máximo 1 MB por request (`spring.servlet.multipart.max-request-size: 1MB`)
+- Exceder el límite → `MaxUploadSizeExceededException` → 413 en `GlobalExceptionHandler`
+
+---
+
+## �🚀 Compilar y Generar Clases desde el Contrato
 
 Para generar las clases desde el contrato OpenAPI:
 

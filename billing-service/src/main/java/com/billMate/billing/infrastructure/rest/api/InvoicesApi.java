@@ -6,9 +6,13 @@
 package com.billMate.billing.infrastructure.rest.api;
 
 import com.billMate.billing.infrastructure.rest.dto.ApiError;
+import org.springframework.format.annotation.DateTimeFormat;
 import com.billMate.billing.infrastructure.rest.dto.InvoiceDTO;
 import com.billMate.billing.infrastructure.rest.dto.InvoicePageDTO;
+import java.time.LocalDate;
 import com.billMate.billing.infrastructure.rest.dto.NewInvoiceDTO;
+import com.billMate.billing.infrastructure.rest.dto.PatchInvoiceDTO;
+import java.util.UUID;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import jakarta.annotation.Generated;
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-16T17:18:40.793224800+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-24T22:56:18.482070300+01:00[Europe/Madrid]")
 @Validated
 @Tag(name = "invoices", description = "Endpoints para gestión de facturas")
 public interface InvoicesApi {
@@ -44,6 +48,7 @@ public interface InvoicesApi {
      * POST /invoices : Crear una nueva factura
      *
      * @param newInvoiceDTO  (required)
+     * @param idempotencyKey UUID único para garantizar idempotencia. Si se envía la misma clave en una segunda llamada, se devuelve la respuesta original sin crear duplicados. TTL: 24h. (optional)
      * @return Factura creada correctamente (status code 201)
      *         or Petición mal formada (status code 400)
      *         or Error interno (status code 500)
@@ -72,7 +77,8 @@ public interface InvoicesApi {
     )
     
     ResponseEntity<InvoiceDTO> createInvoice(
-        @Parameter(name = "NewInvoiceDTO", description = "", required = true) @Valid @RequestBody NewInvoiceDTO newInvoiceDTO
+        @Parameter(name = "NewInvoiceDTO", description = "", required = true) @Valid @RequestBody NewInvoiceDTO newInvoiceDTO,
+        @Parameter(name = "Idempotency-Key", description = "UUID único para garantizar idempotencia. Si se envía la misma clave en una segunda llamada, se devuelve la respuesta original sin crear duplicados. TTL: 24h.", in = ParameterIn.HEADER) @RequestHeader(value = "Idempotency-Key", required = false) UUID idempotencyKey
     );
 
 
@@ -255,6 +261,10 @@ public interface InvoicesApi {
      *
      * @param page  (optional, default to 0)
      * @param size  (optional, default to 20)
+     * @param sort Ordenación. Formato: campo,dirección (ej: date,asc). Campos válidos: date, total, status, createdAt. (optional, default to createdAt,desc)
+     * @param status Filtrar por estado de la factura. (optional)
+     * @param dateFrom Filtrar facturas con fecha mayor o igual a esta (formato: YYYY-MM-DD). (optional)
+     * @param dateTo Filtrar facturas con fecha menor o igual a esta (formato: YYYY-MM-DD). (optional)
      * @return Página de facturas (status code 200)
      *         or Petición mal formada (status code 400)
      *         or Error interno del servidor (status code 500)
@@ -283,7 +293,11 @@ public interface InvoicesApi {
     
     ResponseEntity<InvoicePageDTO> getInvoices(
         @Min(0) @Parameter(name = "page", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size
+        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+        @Parameter(name = "sort", description = "Ordenación. Formato: campo,dirección (ej: date,asc). Campos válidos: date, total, status, createdAt.", in = ParameterIn.QUERY) @Valid @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String sort,
+        @Parameter(name = "status", description = "Filtrar por estado de la factura.", in = ParameterIn.QUERY) @Valid @RequestParam(value = "status", required = false) String status,
+        @Parameter(name = "dateFrom", description = "Filtrar facturas con fecha mayor o igual a esta (formato: YYYY-MM-DD).", in = ParameterIn.QUERY) @Valid @RequestParam(value = "dateFrom", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+        @Parameter(name = "dateTo", description = "Filtrar facturas con fecha menor o igual a esta (formato: YYYY-MM-DD).", in = ParameterIn.QUERY) @Valid @RequestParam(value = "dateTo", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo
     );
 
 
@@ -293,6 +307,10 @@ public interface InvoicesApi {
      * @param clientId  (required)
      * @param page  (optional, default to 0)
      * @param size  (optional, default to 20)
+     * @param sort Ordenación. Formato: campo,dirección (ej: date,asc). Campos válidos: date, total, status, createdAt. (optional, default to createdAt,desc)
+     * @param status Filtrar por estado de la factura. (optional)
+     * @param dateFrom Filtrar facturas con fecha mayor o igual a esta (formato: YYYY-MM-DD). (optional)
+     * @param dateTo Filtrar facturas con fecha menor o igual a esta (formato: YYYY-MM-DD). (optional)
      * @return Página de facturas del cliente (status code 200)
      *         or Petición mal formada (status code 400)
      *         or Acceso prohibido. El usuario no tiene permisos suficientes. (status code 403)
@@ -330,7 +348,55 @@ public interface InvoicesApi {
     ResponseEntity<InvoicePageDTO> getInvoicesByClientId(
         @Parameter(name = "clientId", description = "", required = true, in = ParameterIn.PATH) @PathVariable("clientId") Long clientId,
         @Min(0) @Parameter(name = "page", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size
+        @Min(1) @Max(20) @Parameter(name = "size", description = "", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+        @Parameter(name = "sort", description = "Ordenación. Formato: campo,dirección (ej: date,asc). Campos válidos: date, total, status, createdAt.", in = ParameterIn.QUERY) @Valid @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String sort,
+        @Parameter(name = "status", description = "Filtrar por estado de la factura.", in = ParameterIn.QUERY) @Valid @RequestParam(value = "status", required = false) String status,
+        @Parameter(name = "dateFrom", description = "Filtrar facturas con fecha mayor o igual a esta (formato: YYYY-MM-DD).", in = ParameterIn.QUERY) @Valid @RequestParam(value = "dateFrom", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+        @Parameter(name = "dateTo", description = "Filtrar facturas con fecha menor o igual a esta (formato: YYYY-MM-DD).", in = ParameterIn.QUERY) @Valid @RequestParam(value = "dateTo", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo
+    );
+
+
+    /**
+     * PATCH /invoices/{invoiceId} : Actualizar parcialmente una factura (JSON Merge Patch)
+     * Actualiza solo los campos incluidos en el body. Solo válido para facturas en estado DRAFT (RFC 7396).
+     *
+     * @param invoiceId  (required)
+     * @param patchInvoiceDTO  (required)
+     * @return Factura actualizada parcialmente (status code 200)
+     *         or Datos inválidos o factura no está en estado DRAFT (status code 400)
+     *         or Factura no encontrada (status code 404)
+     *         or Error interno del servidor (status code 500)
+     */
+    @Operation(
+        operationId = "patchInvoice",
+        summary = "Actualizar parcialmente una factura (JSON Merge Patch)",
+        description = "Actualiza solo los campos incluidos en el body. Solo válido para facturas en estado DRAFT (RFC 7396).",
+        tags = { "invoices" },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Factura actualizada parcialmente", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = InvoiceDTO.class))
+            }),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos o factura no está en estado DRAFT", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Factura no encontrada", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+            })
+        }
+    )
+    @RequestMapping(
+        method = RequestMethod.PATCH,
+        value = "/invoices/{invoiceId}",
+        produces = { "application/json" },
+        consumes = { "application/merge-patch+json" }
+    )
+    
+    ResponseEntity<InvoiceDTO> patchInvoice(
+        @Parameter(name = "invoiceId", description = "", required = true, in = ParameterIn.PATH) @PathVariable("invoiceId") Long invoiceId,
+        @Parameter(name = "PatchInvoiceDTO", description = "", required = true) @Valid @RequestBody PatchInvoiceDTO patchInvoiceDTO
     );
 
 

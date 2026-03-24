@@ -60,6 +60,9 @@ public class InvoiceControllerTest {
     private PayInvoiceUseCase payInvoiceUseCase;
 
     @MockBean
+    private PatchInvoiceUseCase patchInvoiceUseCase;
+
+    @MockBean
     private InvoiceRestMapper invoiceRestMapper;
 
     @Test
@@ -170,7 +173,10 @@ public class InvoiceControllerTest {
                 BigDecimal.valueOf(75.0), BigDecimal.valueOf(21), null);
 
         PageResult<Invoice> page = new PageResult<>(List.of(i1, i2), 0, 20, 2L, 1);
-        when(getInvoicesByClientUseCase.execute(eq(5L), anyInt(), anyInt())).thenReturn(page);
+        when(invoiceRestMapper.toSearchQuery(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new com.billMate.billing.domain.invoice.port.in.query.InvoiceSearchQuery(
+                        0, 20, "createdAt", "desc", null, null, null, 5L));
+        when(getInvoicesByClientUseCase.execute(any(com.billMate.billing.domain.invoice.port.in.query.InvoiceSearchQuery.class))).thenReturn(page);
 
         InvoiceDTO dto1 = new InvoiceDTO();
         dto1.setInvoiceId(1L);

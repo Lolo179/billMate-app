@@ -15,11 +15,12 @@ import java.util.*;
 import jakarta.annotation.Generated;
 
 /**
- * NewClientDTO
+ * DTO para actualización parcial de cliente (RFC 7396 JSON Merge Patch). Solo los campos presentes en el body serán actualizados.
  */
 
+@Schema(name = "PatchClientDTO", description = "DTO para actualización parcial de cliente (RFC 7396 JSON Merge Patch). Solo los campos presentes en el body serán actualizados.")
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-24T22:56:18.482070300+01:00[Europe/Madrid]")
-public class NewClientDTO {
+public class PatchClientDTO {
 
   private String name;
 
@@ -31,21 +32,7 @@ public class NewClientDTO {
 
   private String address;
 
-  public NewClientDTO() {
-    super();
-  }
-
-  /**
-   * Constructor with only required parameters
-   */
-  public NewClientDTO(String name, String email, String nif, String address) {
-    this.name = name;
-    this.email = email;
-    this.nif = nif;
-    this.address = address;
-  }
-
-  public NewClientDTO name(String name) {
+  public PatchClientDTO name(String name) {
     this.name = name;
     return this;
   }
@@ -54,8 +41,8 @@ public class NewClientDTO {
    * Get name
    * @return name
   */
-  @NotNull @Size(min = 2, max = 100) 
-  @Schema(name = "name", example = "Juan Pérez", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Size(min = 2, max = 100) 
+  @Schema(name = "name", example = "Juan Pérez", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("name")
   public String getName() {
     return name;
@@ -65,7 +52,7 @@ public class NewClientDTO {
     this.name = name;
   }
 
-  public NewClientDTO email(String email) {
+  public PatchClientDTO email(String email) {
     this.email = email;
     return this;
   }
@@ -74,8 +61,8 @@ public class NewClientDTO {
    * Get email
    * @return email
   */
-  @NotNull @jakarta.validation.constraints.Email 
-  @Schema(name = "email", example = "juanperez@mail.com", requiredMode = Schema.RequiredMode.REQUIRED)
+  @jakarta.validation.constraints.Email 
+  @Schema(name = "email", example = "juanperez@mail.com", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("email")
   public String getEmail() {
     return email;
@@ -85,7 +72,7 @@ public class NewClientDTO {
     this.email = email;
   }
 
-  public NewClientDTO phone(String phone) {
+  public PatchClientDTO phone(String phone) {
     this.phone = phone;
     return this;
   }
@@ -105,7 +92,7 @@ public class NewClientDTO {
     this.phone = phone;
   }
 
-  public NewClientDTO nif(String nif) {
+  public PatchClientDTO nif(String nif) {
     this.nif = nif;
     return this;
   }
@@ -114,8 +101,8 @@ public class NewClientDTO {
    * Get nif
    * @return nif
   */
-  @NotNull @Pattern(regexp = "^\\d{8}[A-Z]$") @Size(min = 9, max = 9) 
-  @Schema(name = "nif", example = "12345678Z", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Pattern(regexp = "^\\d{8}[A-Z]$") @Size(min = 9, max = 9) 
+  @Schema(name = "nif", example = "12345678Z", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("nif")
   public String getNif() {
     return nif;
@@ -125,7 +112,7 @@ public class NewClientDTO {
     this.nif = nif;
   }
 
-  public NewClientDTO address(String address) {
+  public PatchClientDTO address(String address) {
     this.address = address;
     return this;
   }
@@ -134,8 +121,8 @@ public class NewClientDTO {
    * Get address
    * @return address
   */
-  @NotNull @Size(min = 5) 
-  @Schema(name = "address", example = "Calle Falsa 123, Madrid", requiredMode = Schema.RequiredMode.REQUIRED)
+  
+  @Schema(name = "address", example = "Calle Falsa 123, Madrid", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("address")
   public String getAddress() {
     return address;
@@ -153,12 +140,12 @@ public class NewClientDTO {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    NewClientDTO newClientDTO = (NewClientDTO) o;
-    return Objects.equals(this.name, newClientDTO.name) &&
-        Objects.equals(this.email, newClientDTO.email) &&
-        Objects.equals(this.phone, newClientDTO.phone) &&
-        Objects.equals(this.nif, newClientDTO.nif) &&
-        Objects.equals(this.address, newClientDTO.address);
+    PatchClientDTO patchClientDTO = (PatchClientDTO) o;
+    return Objects.equals(this.name, patchClientDTO.name) &&
+        Objects.equals(this.email, patchClientDTO.email) &&
+        Objects.equals(this.phone, patchClientDTO.phone) &&
+        Objects.equals(this.nif, patchClientDTO.nif) &&
+        Objects.equals(this.address, patchClientDTO.address);
   }
 
   @Override
@@ -169,7 +156,7 @@ public class NewClientDTO {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class NewClientDTO {\n");
+    sb.append("class PatchClientDTO {\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    email: ").append(toIndentedString(email)).append("\n");
     sb.append("    phone: ").append(toIndentedString(phone)).append("\n");

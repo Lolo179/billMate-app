@@ -110,7 +110,9 @@ class CreateClientServiceTest {
         }
 
         @Override
-        public PageResult<Client> findAll(int page, int size) {
+        public PageResult<Client> search(com.billMate.billing.domain.client.port.in.query.ClientSearchQuery query) {
+            int page = query.page();
+            int size = query.size();
             int from = page * size;
             int to = Math.min(from + size, savedClients.size());
             List<Client> slice = from >= savedClients.size() ? List.of() : savedClients.subList(from, to);
