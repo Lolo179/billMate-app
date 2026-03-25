@@ -86,18 +86,21 @@ jobs:
             if docker compose -f e2e/docker-compose.ci.yaml exec -T auth-db pg_isready -U postgres > /dev/null 2>&1; then
               echo "auth-db is ready"; break
             fi
+            [ "$attempt" = "30" ] && echo "auth-db did not start in time" && exit 1
             sleep 2
           done
           for attempt in $(seq 1 30); do
             if docker compose -f e2e/docker-compose.ci.yaml exec -T billing-db pg_isready -U postgres > /dev/null 2>&1; then
               echo "billing-db is ready"; break
             fi
+            [ "$attempt" = "30" ] && echo "billing-db did not start in time" && exit 1
             sleep 2
           done
           for attempt in $(seq 1 30); do
             if docker compose -f e2e/docker-compose.ci.yaml exec -T kafka /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1; then
               echo "kafka is ready"; break
             fi
+            [ "$attempt" = "30" ] && echo "kafka did not start in time" && exit 1
             sleep 3
           done
 
@@ -110,7 +113,7 @@ jobs:
             --spring.datasource.url=jdbc:postgresql://localhost:5434/auth_db \
             --spring.datasource.username=postgres \
             --spring.datasource.password=postgres \
-            --jwt.secret=${{ secrets.JWT_SECRET }} \
+            --jwt.secret=${{ secrets.JWT_SECRET || 'dGVzdC1vbmx5LXNlY3JldC1ub3QtZm9yLXByb2R1Y3Rpb24tMTIz' }} \
             > .tmp/auth-service.log 2>&1 &
           echo $! > .tmp/auth-service.pid
 
@@ -130,7 +133,7 @@ jobs:
         run: |
           java -jar api-gateway/target/*.jar \
             --spring.docker-compose.enabled=false \
-            --jwt.secret=${{ secrets.JWT_SECRET }} \
+            --jwt.secret=${{ secrets.JWT_SECRET || 'dGVzdC1vbmx5LXNlY3JldC1ub3QtZm9yLXByb2R1Y3Rpb24tMTIz' }} \
             > .tmp/api-gateway.log 2>&1 &
           echo $! > .tmp/api-gateway.pid
 
