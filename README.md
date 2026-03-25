@@ -150,6 +150,20 @@ push a main
 
 EC2 solo se actualiza si CI completa con éxito (build + E2E).
 
+### Dependabot — Actualizaciones automáticas de dependencias
+
+Configurado en `.github/dependabot.yml`. Abre PRs semanales agrupados por ecosistema:
+
+| Ecosistema | Directorio | Grupos |
+|---|---|---|
+| `github-actions` | `/` | Todas las actions juntas |
+| `maven` | `/` | Spring, JWT, utilidades de código, testing |
+| `npm` | `/frontend-service` | Vite, React, testing, TypeScript |
+| `npm` | `/e2e` | Playwright |
+
+- Las *security updates* siempre se aplican, ignorando los filtros de ignored versions.
+- Major versions de Spring Boot/Cloud y paquetes npm requieren actualización manual.
+
 ---
 
 ## 📁 Estructura del Proyecto
@@ -178,7 +192,8 @@ billMate-app/
 │   ├── frontend-ci.yaml    #   CI: tests + build frontend (PRs)
 │   ├── e2e-ci.yaml         #   CI: E2E Playwright entorno completo (PRs)
 │   ├── ci.yaml             #   CI: build+push GHCR + E2E (main)
-│   └── deploy.yaml         #   CD: pull + deploy EC2 (cuando CI pasa)
+│   ├── deploy.yaml         #   CD: pull + deploy EC2 (cuando CI pasa)
+│   └── dependabot.yml      #   Actualizaciones automáticas de dependencias
 └── README.md               # Este archivo
 ```
 

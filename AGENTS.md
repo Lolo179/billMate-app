@@ -196,6 +196,22 @@ push a main
 
 EC2 **solo se actualiza si CI completa con éxito** (build + E2E). No existen tags semánticos por servicio; el deploy se activa automáticamente con cada merge a `main`.
 
+### Dependabot — Actualizaciones automáticas de dependencias
+
+Configurado en `.github/dependabot.yml`. Abre PRs semanales con las siguientes reglas:
+
+| Ecosistema | Directorio | Día | Agrupación |
+|---|---|---|---|
+| `github-actions` | `/` | Lunes | Todas las actions en un solo PR |
+| `maven` | `/` | Lunes | `spring-ecosystem`, `jwt`, `code-utilities`, `testing` |
+| `npm` | `/frontend-service` | Martes | `vite-ecosystem`, `react`, `testing`, `typescript` |
+| `npm` | `/e2e` | Martes | `playwright`, `types` |
+
+**Reglas de seguridad:**
+- Las *security updates* siempre se generan independientemente de los `ignore`.
+- Se ignoran major versions de `spring-boot-dependencies` y `spring-cloud-dependencies` (requieren migración manual).
+- Se ignoran major versions de todos los paquetes npm.
+
 ## Build y Test
 
 ```bash

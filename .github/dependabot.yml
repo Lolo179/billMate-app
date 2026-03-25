@@ -1,0 +1,137 @@
+version: 2
+updates:
+
+  # ── GitHub Actions ────────────────────────────────────────────────────────
+  # Actualiza las actions usadas en todos los workflows
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: "Europe/Madrid"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies
+      - ci
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # ── Maven (todos los servicios Java) ──────────────────────────────────────
+  # El root pom.xml declara los módulos; Dependabot los traversa todos.
+  # Cubre: api-gateway, auth-service, billing-service, notification-service
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "Europe/Madrid"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "build"
+    labels:
+      - dependencies
+      - java
+    groups:
+      # Spring Boot, Cloud, Security y Kafka agrupados: hay que testearlos juntos
+      spring-ecosystem:
+        patterns:
+          - "org.springframework*"
+      # Lombok, MapStruct y otras utilidades de código
+      code-utilities:
+        patterns:
+          - "org.projectlombok*"
+          - "org.mapstruct*"
+      # JWT (JJWT) — mantener triada io.jsonwebtoken:* unida
+      jwt:
+        patterns:
+          - "io.jsonwebtoken*"
+      # Testing: JUnit, Mockito, Testcontainers, AssertJ
+      testing:
+        dependency-type: development
+        patterns:
+          - "org.junit*"
+          - "org.mockito*"
+          - "org.testcontainers*"
+          - "org.assertj*"
+    ignore:
+      # Los BOM de Spring requieren migración manual: ignorar major versions.
+      # Las security updates siguen pasando igualmente (Dependabot las omite aquí).
+      - dependency-name: "org.springframework.boot:spring-boot-dependencies"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.springframework.cloud:spring-cloud-dependencies"
+        update-types: ["version-update:semver-major"]
+
+  # ── npm — frontend-service (React + Vite + Vitest) ───────────────────────
+  - package-ecosystem: npm
+    directory: /frontend-service
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "09:00"
+      timezone: "Europe/Madrid"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "build(frontend)"
+    labels:
+      - dependencies
+      - frontend
+    groups:
+      vite-ecosystem:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "vite-*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "react-router-dom"
+          - "@types/react*"
+      testing:
+        dependency-type: development
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "jsdom"
+          - "msw"
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+    ignore:
+      # Major versions de cualquier paquete npm requieren revisión manual
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ── npm — e2e (Playwright) ────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /e2e
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "09:00"
+      timezone: "Europe/Madrid"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "test(e2e)"
+    labels:
+      - dependencies
+      - e2e
+    groups:
+      playwright:
+        patterns:
+          - "@playwright/*"
+          - "playwright"
+      types:
+        patterns:
+          - "@types/*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
