@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.lang.Nullable;
 import org.openapitools.jackson.nullable.JsonNullable;
 import java.time.OffsetDateTime;
 import jakarta.validation.Valid;
@@ -25,20 +26,20 @@ import jakarta.annotation.Generated;
  */
 
 @Schema(name = "PatchInvoiceDTO", description = "DTO para actualización parcial de factura (RFC 7396 JSON Merge Patch). Solo válido en estado DRAFT. Solo los campos presentes en el body serán actualizados.")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-25T23:54:08.777998200+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-26T00:11:19.317367700+01:00[Europe/Madrid]", comments = "Generator version: 7.21.0")
 public class PatchInvoiceDTO {
 
-  private Long clientId;
+  private @Nullable Long clientId;
 
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-  private LocalDate date;
+  private @Nullable LocalDate date;
 
-  private String description;
+  private @Nullable String description;
 
   @Valid
-  private List<@Valid InvoiceLine> invoiceLines;
+  private List<@Valid InvoiceLine> invoiceLines = new ArrayList<>();
 
-  public PatchInvoiceDTO clientId(Long clientId) {
+  public PatchInvoiceDTO clientId(@Nullable Long clientId) {
     this.clientId = clientId;
     return this;
   }
@@ -47,19 +48,20 @@ public class PatchInvoiceDTO {
    * Get clientId
    * minimum: 1
    * @return clientId
-  */
-  @Min(1L) 
+   */
+  @Min(value = 1L) 
   @Schema(name = "clientId", example = "3", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("clientId")
-  public Long getClientId() {
+  public @Nullable Long getClientId() {
     return clientId;
   }
 
-  public void setClientId(Long clientId) {
+  @JsonProperty("clientId")
+  public void setClientId(@Nullable Long clientId) {
     this.clientId = clientId;
   }
 
-  public PatchInvoiceDTO date(LocalDate date) {
+  public PatchInvoiceDTO date(@Nullable LocalDate date) {
     this.date = date;
     return this;
   }
@@ -67,19 +69,20 @@ public class PatchInvoiceDTO {
   /**
    * Get date
    * @return date
-  */
+   */
   @Valid 
-  @Schema(name = "date", example = "Sun Jun 01 02:00:00 CEST 2025", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @Schema(name = "date", example = "2025-06-01", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("date")
-  public LocalDate getDate() {
+  public @Nullable LocalDate getDate() {
     return date;
   }
 
-  public void setDate(LocalDate date) {
+  @JsonProperty("date")
+  public void setDate(@Nullable LocalDate date) {
     this.date = date;
   }
 
-  public PatchInvoiceDTO description(String description) {
+  public PatchInvoiceDTO description(@Nullable String description) {
     this.description = description;
     return this;
   }
@@ -87,15 +90,16 @@ public class PatchInvoiceDTO {
   /**
    * Get description
    * @return description
-  */
+   */
   @Size(max = 255) 
   @Schema(name = "description", example = "Proyecto web actualizado", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("description")
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return description;
   }
 
-  public void setDescription(String description) {
+  @JsonProperty("description")
+  public void setDescription(@Nullable String description) {
     this.description = description;
   }
 
@@ -115,7 +119,7 @@ public class PatchInvoiceDTO {
   /**
    * Get invoiceLines
    * @return invoiceLines
-  */
+   */
   @Valid 
   @Schema(name = "invoiceLines", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("invoiceLines")
@@ -123,6 +127,7 @@ public class PatchInvoiceDTO {
     return invoiceLines;
   }
 
+  @JsonProperty("invoiceLines")
   public void setInvoiceLines(List<@Valid InvoiceLine> invoiceLines) {
     this.invoiceLines = invoiceLines;
   }
@@ -163,11 +168,8 @@ public class PatchInvoiceDTO {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+  private String toIndentedString(@Nullable Object o) {
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 }
 

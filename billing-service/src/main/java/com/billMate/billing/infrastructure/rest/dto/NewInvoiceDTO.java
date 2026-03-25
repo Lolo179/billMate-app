@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.lang.Nullable;
 import org.openapitools.jackson.nullable.JsonNullable;
 import java.time.OffsetDateTime;
 import jakarta.validation.Valid;
@@ -25,7 +26,7 @@ import jakarta.annotation.Generated;
  * NewInvoiceDTO
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-25T23:54:08.777998200+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-26T00:11:19.317367700+01:00[Europe/Madrid]", comments = "Generator version: 7.21.0")
 public class NewInvoiceDTO {
 
   private Long clientId;
@@ -48,7 +49,7 @@ public class NewInvoiceDTO {
     
     CANCELLED("CANCELLED");
 
-    private String value;
+    private final String value;
 
     StatusEnum(String value) {
       this.value = value;
@@ -77,7 +78,7 @@ public class NewInvoiceDTO {
 
   private StatusEnum status = StatusEnum.DRAFT;
 
-  private String description;
+  private @Nullable String description;
 
   public NewInvoiceDTO() {
     super();
@@ -101,14 +102,15 @@ public class NewInvoiceDTO {
    * Get clientId
    * minimum: 1
    * @return clientId
-  */
-  @NotNull @Min(1L) 
+   */
+  @NotNull @Min(value = 1L) 
   @Schema(name = "clientId", example = "3", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("clientId")
   public Long getClientId() {
     return clientId;
   }
 
+  @JsonProperty("clientId")
   public void setClientId(Long clientId) {
     this.clientId = clientId;
   }
@@ -121,14 +123,15 @@ public class NewInvoiceDTO {
   /**
    * Get date
    * @return date
-  */
+   */
   @NotNull @Valid 
-  @Schema(name = "date", example = "Sun Jun 01 02:00:00 CEST 2025", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(name = "date", example = "2025-06-01", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("date")
   public LocalDate getDate() {
     return date;
   }
 
+  @JsonProperty("date")
   public void setDate(LocalDate date) {
     this.date = date;
   }
@@ -149,7 +152,7 @@ public class NewInvoiceDTO {
   /**
    * Get invoiceLines
    * @return invoiceLines
-  */
+   */
   @NotNull @Valid @Size(min = 1) 
   @Schema(name = "invoiceLines", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("invoiceLines")
@@ -157,6 +160,7 @@ public class NewInvoiceDTO {
     return invoiceLines;
   }
 
+  @JsonProperty("invoiceLines")
   public void setInvoiceLines(List<@Valid InvoiceLine> invoiceLines) {
     this.invoiceLines = invoiceLines;
   }
@@ -169,7 +173,7 @@ public class NewInvoiceDTO {
   /**
    * Get status
    * @return status
-  */
+   */
   
   @Schema(name = "status", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("status")
@@ -177,11 +181,12 @@ public class NewInvoiceDTO {
     return status;
   }
 
+  @JsonProperty("status")
   public void setStatus(StatusEnum status) {
     this.status = status;
   }
 
-  public NewInvoiceDTO description(String description) {
+  public NewInvoiceDTO description(@Nullable String description) {
     this.description = description;
     return this;
   }
@@ -189,15 +194,16 @@ public class NewInvoiceDTO {
   /**
    * Get description
    * @return description
-  */
+   */
   @Size(max = 255) 
   @Schema(name = "description", example = "Proyecto web completo", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("description")
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return description;
   }
 
-  public void setDescription(String description) {
+  @JsonProperty("description")
+  public void setDescription(@Nullable String description) {
     this.description = description;
   }
 
@@ -239,11 +245,8 @@ public class NewInvoiceDTO {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+  private String toIndentedString(@Nullable Object o) {
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 }
 

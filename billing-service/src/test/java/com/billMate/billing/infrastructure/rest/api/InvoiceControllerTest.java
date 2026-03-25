@@ -17,8 +17,8 @@ import com.billMate.billing.infrastructure.rest.mapper.InvoiceRestMapper;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,37 +32,37 @@ public class InvoiceControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private CreateInvoiceUseCase createInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private GetInvoiceUseCase getInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private GetAllInvoicesUseCase getAllInvoicesUseCase;
 
-    @MockBean
+    @MockitoBean
     private GetInvoicesByClientUseCase getInvoicesByClientUseCase;
 
-    @MockBean
+    @MockitoBean
     private UpdateInvoiceUseCase updateInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private DeleteInvoiceUseCase deleteInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private EmitInvoiceUseCase emitInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private DownloadInvoicePdfUseCase downloadInvoicePdfUseCase;
 
-    @MockBean
+    @MockitoBean
     private PayInvoiceUseCase payInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private PatchInvoiceUseCase patchInvoiceUseCase;
 
-    @MockBean
+    @MockitoBean
     private InvoiceRestMapper invoiceRestMapper;
 
     @Test

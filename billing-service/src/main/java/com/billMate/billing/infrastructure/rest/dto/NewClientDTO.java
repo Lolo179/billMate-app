@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.springframework.lang.Nullable;
 import org.openapitools.jackson.nullable.JsonNullable;
 import java.time.OffsetDateTime;
 import jakarta.validation.Valid;
@@ -18,14 +19,14 @@ import jakarta.annotation.Generated;
  * NewClientDTO
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-25T23:54:08.777998200+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-26T00:11:19.317367700+01:00[Europe/Madrid]", comments = "Generator version: 7.21.0")
 public class NewClientDTO {
 
   private String name;
 
   private String email;
 
-  private String phone;
+  private @Nullable String phone;
 
   private String nif;
 
@@ -53,7 +54,7 @@ public class NewClientDTO {
   /**
    * Get name
    * @return name
-  */
+   */
   @NotNull @Size(min = 2, max = 100) 
   @Schema(name = "name", example = "Juan Pérez", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("name")
@@ -61,6 +62,7 @@ public class NewClientDTO {
     return name;
   }
 
+  @JsonProperty("name")
   public void setName(String name) {
     this.name = name;
   }
@@ -73,7 +75,7 @@ public class NewClientDTO {
   /**
    * Get email
    * @return email
-  */
+   */
   @NotNull @jakarta.validation.constraints.Email 
   @Schema(name = "email", example = "juanperez@mail.com", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("email")
@@ -81,11 +83,12 @@ public class NewClientDTO {
     return email;
   }
 
+  @JsonProperty("email")
   public void setEmail(String email) {
     this.email = email;
   }
 
-  public NewClientDTO phone(String phone) {
+  public NewClientDTO phone(@Nullable String phone) {
     this.phone = phone;
     return this;
   }
@@ -93,15 +96,16 @@ public class NewClientDTO {
   /**
    * Get phone
    * @return phone
-  */
+   */
   @Size(max = 20) 
   @Schema(name = "phone", example = "+34 600 123 456", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("phone")
-  public String getPhone() {
+  public @Nullable String getPhone() {
     return phone;
   }
 
-  public void setPhone(String phone) {
+  @JsonProperty("phone")
+  public void setPhone(@Nullable String phone) {
     this.phone = phone;
   }
 
@@ -113,7 +117,7 @@ public class NewClientDTO {
   /**
    * Get nif
    * @return nif
-  */
+   */
   @NotNull @Pattern(regexp = "^\\d{8}[A-Z]$") @Size(min = 9, max = 9) 
   @Schema(name = "nif", example = "12345678Z", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("nif")
@@ -121,6 +125,7 @@ public class NewClientDTO {
     return nif;
   }
 
+  @JsonProperty("nif")
   public void setNif(String nif) {
     this.nif = nif;
   }
@@ -133,7 +138,7 @@ public class NewClientDTO {
   /**
    * Get address
    * @return address
-  */
+   */
   @NotNull @Size(min = 5) 
   @Schema(name = "address", example = "Calle Falsa 123, Madrid", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("address")
@@ -141,6 +146,7 @@ public class NewClientDTO {
     return address;
   }
 
+  @JsonProperty("address")
   public void setAddress(String address) {
     this.address = address;
   }
@@ -183,11 +189,8 @@ public class NewClientDTO {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+  private String toIndentedString(@Nullable Object o) {
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 }
 

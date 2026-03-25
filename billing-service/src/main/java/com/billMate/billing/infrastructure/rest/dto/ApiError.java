@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.lang.Nullable;
 import org.openapitools.jackson.nullable.JsonNullable;
 import java.time.OffsetDateTime;
 import jakarta.validation.Valid;
@@ -23,22 +24,22 @@ import jakarta.annotation.Generated;
  * ApiError
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-25T23:54:08.777998200+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-26T00:11:19.317367700+01:00[Europe/Madrid]", comments = "Generator version: 7.21.0")
 public class ApiError {
 
-  private String status;
+  private @Nullable String status;
 
-  private Integer code;
+  private @Nullable Integer code;
 
-  private String message;
+  private @Nullable String message;
 
   @Valid
-  private List<String> errors;
+  private List<String> errors = new ArrayList<>();
 
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private OffsetDateTime timestamp;
+  private @Nullable OffsetDateTime timestamp;
 
-  public ApiError status(String status) {
+  public ApiError status(@Nullable String status) {
     this.status = status;
     return this;
   }
@@ -46,19 +47,20 @@ public class ApiError {
   /**
    * Get status
    * @return status
-  */
+   */
   
   @Schema(name = "status", example = "NOT_FOUND", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("status")
-  public String getStatus() {
+  public @Nullable String getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  @JsonProperty("status")
+  public void setStatus(@Nullable String status) {
     this.status = status;
   }
 
-  public ApiError code(Integer code) {
+  public ApiError code(@Nullable Integer code) {
     this.code = code;
     return this;
   }
@@ -66,19 +68,20 @@ public class ApiError {
   /**
    * Get code
    * @return code
-  */
+   */
   
   @Schema(name = "code", example = "404", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("code")
-  public Integer getCode() {
+  public @Nullable Integer getCode() {
     return code;
   }
 
-  public void setCode(Integer code) {
+  @JsonProperty("code")
+  public void setCode(@Nullable Integer code) {
     this.code = code;
   }
 
-  public ApiError message(String message) {
+  public ApiError message(@Nullable String message) {
     this.message = message;
     return this;
   }
@@ -86,15 +89,16 @@ public class ApiError {
   /**
    * Get message
    * @return message
-  */
+   */
   
   @Schema(name = "message", example = "Cliente no encontrado con el ID especificado.", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("message")
-  public String getMessage() {
+  public @Nullable String getMessage() {
     return message;
   }
 
-  public void setMessage(String message) {
+  @JsonProperty("message")
+  public void setMessage(@Nullable String message) {
     this.message = message;
   }
 
@@ -114,7 +118,7 @@ public class ApiError {
   /**
    * Get errors
    * @return errors
-  */
+   */
   
   @Schema(name = "errors", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("errors")
@@ -122,11 +126,12 @@ public class ApiError {
     return errors;
   }
 
+  @JsonProperty("errors")
   public void setErrors(List<String> errors) {
     this.errors = errors;
   }
 
-  public ApiError timestamp(OffsetDateTime timestamp) {
+  public ApiError timestamp(@Nullable OffsetDateTime timestamp) {
     this.timestamp = timestamp;
     return this;
   }
@@ -134,15 +139,16 @@ public class ApiError {
   /**
    * Get timestamp
    * @return timestamp
-  */
+   */
   @Valid 
   @Schema(name = "timestamp", example = "2025-05-25T17:42:01Z", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("timestamp")
-  public OffsetDateTime getTimestamp() {
+  public @Nullable OffsetDateTime getTimestamp() {
     return timestamp;
   }
 
-  public void setTimestamp(OffsetDateTime timestamp) {
+  @JsonProperty("timestamp")
+  public void setTimestamp(@Nullable OffsetDateTime timestamp) {
     this.timestamp = timestamp;
   }
 
@@ -184,11 +190,8 @@ public class ApiError {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+  private String toIndentedString(@Nullable Object o) {
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 }
 

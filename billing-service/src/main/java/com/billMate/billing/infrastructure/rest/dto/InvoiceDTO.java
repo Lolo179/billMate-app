@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.lang.Nullable;
 import org.openapitools.jackson.nullable.JsonNullable;
 import java.time.OffsetDateTime;
 import jakarta.validation.Valid;
@@ -27,7 +28,7 @@ import jakarta.annotation.Generated;
  * InvoiceDTO
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-25T23:54:08.777998200+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-26T00:11:19.317367700+01:00[Europe/Madrid]", comments = "Generator version: 7.21.0")
 public class InvoiceDTO {
 
   private Long invoiceId;
@@ -40,7 +41,7 @@ public class InvoiceDTO {
   @Valid
   private List<@Valid InvoiceLine> invoiceLines = new ArrayList<>();
 
-  private BigDecimal total;
+  private @Nullable BigDecimal total;
 
   /**
    * Gets or Sets status
@@ -54,7 +55,7 @@ public class InvoiceDTO {
     
     CANCELLED("CANCELLED");
 
-    private String value;
+    private final String value;
 
     StatusEnum(String value) {
       this.value = value;
@@ -81,14 +82,14 @@ public class InvoiceDTO {
     }
   }
 
-  private StatusEnum status;
+  private @Nullable StatusEnum status;
 
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private OffsetDateTime createdAt;
+  private @Nullable OffsetDateTime createdAt;
 
-  private Double taxPercentage;
+  private @Nullable Double taxPercentage;
 
-  private String description;
+  private @Nullable String description;
 
   public InvoiceDTO() {
     super();
@@ -112,7 +113,7 @@ public class InvoiceDTO {
   /**
    * Get invoiceId
    * @return invoiceId
-  */
+   */
   @NotNull 
   @Schema(name = "invoiceId", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("invoiceId")
@@ -120,6 +121,7 @@ public class InvoiceDTO {
     return invoiceId;
   }
 
+  @JsonProperty("invoiceId")
   public void setInvoiceId(Long invoiceId) {
     this.invoiceId = invoiceId;
   }
@@ -132,7 +134,7 @@ public class InvoiceDTO {
   /**
    * Get clientId
    * @return clientId
-  */
+   */
   @NotNull 
   @Schema(name = "clientId", example = "5", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("clientId")
@@ -140,6 +142,7 @@ public class InvoiceDTO {
     return clientId;
   }
 
+  @JsonProperty("clientId")
   public void setClientId(Long clientId) {
     this.clientId = clientId;
   }
@@ -152,14 +155,15 @@ public class InvoiceDTO {
   /**
    * Get date
    * @return date
-  */
+   */
   @NotNull @Valid 
-  @Schema(name = "date", example = "Sun Jun 01 02:00:00 CEST 2025", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(name = "date", example = "2025-06-01", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("date")
   public LocalDate getDate() {
     return date;
   }
 
+  @JsonProperty("date")
   public void setDate(LocalDate date) {
     this.date = date;
   }
@@ -180,7 +184,7 @@ public class InvoiceDTO {
   /**
    * Get invoiceLines
    * @return invoiceLines
-  */
+   */
   @NotNull @Valid 
   @Schema(name = "invoiceLines", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("invoiceLines")
@@ -188,11 +192,12 @@ public class InvoiceDTO {
     return invoiceLines;
   }
 
+  @JsonProperty("invoiceLines")
   public void setInvoiceLines(List<@Valid InvoiceLine> invoiceLines) {
     this.invoiceLines = invoiceLines;
   }
 
-  public InvoiceDTO total(BigDecimal total) {
+  public InvoiceDTO total(@Nullable BigDecimal total) {
     this.total = total;
     return this;
   }
@@ -200,19 +205,20 @@ public class InvoiceDTO {
   /**
    * Get total
    * @return total
-  */
+   */
   @Valid 
   @Schema(name = "total", accessMode = Schema.AccessMode.READ_ONLY, example = "1500.0", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("total")
-  public BigDecimal getTotal() {
+  public @Nullable BigDecimal getTotal() {
     return total;
   }
 
-  public void setTotal(BigDecimal total) {
+  @JsonProperty("total")
+  public void setTotal(@Nullable BigDecimal total) {
     this.total = total;
   }
 
-  public InvoiceDTO status(StatusEnum status) {
+  public InvoiceDTO status(@Nullable StatusEnum status) {
     this.status = status;
     return this;
   }
@@ -220,19 +226,20 @@ public class InvoiceDTO {
   /**
    * Get status
    * @return status
-  */
+   */
   
   @Schema(name = "status", example = "DRAFT", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("status")
-  public StatusEnum getStatus() {
+  public @Nullable StatusEnum getStatus() {
     return status;
   }
 
-  public void setStatus(StatusEnum status) {
+  @JsonProperty("status")
+  public void setStatus(@Nullable StatusEnum status) {
     this.status = status;
   }
 
-  public InvoiceDTO createdAt(OffsetDateTime createdAt) {
+  public InvoiceDTO createdAt(@Nullable OffsetDateTime createdAt) {
     this.createdAt = createdAt;
     return this;
   }
@@ -240,19 +247,20 @@ public class InvoiceDTO {
   /**
    * Get createdAt
    * @return createdAt
-  */
+   */
   @Valid 
   @Schema(name = "createdAt", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("createdAt")
-  public OffsetDateTime getCreatedAt() {
+  public @Nullable OffsetDateTime getCreatedAt() {
     return createdAt;
   }
 
-  public void setCreatedAt(OffsetDateTime createdAt) {
+  @JsonProperty("createdAt")
+  public void setCreatedAt(@Nullable OffsetDateTime createdAt) {
     this.createdAt = createdAt;
   }
 
-  public InvoiceDTO taxPercentage(Double taxPercentage) {
+  public InvoiceDTO taxPercentage(@Nullable Double taxPercentage) {
     this.taxPercentage = taxPercentage;
     return this;
   }
@@ -260,19 +268,20 @@ public class InvoiceDTO {
   /**
    * Get taxPercentage
    * @return taxPercentage
-  */
+   */
   
   @Schema(name = "taxPercentage", accessMode = Schema.AccessMode.READ_ONLY, example = "21", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("taxPercentage")
-  public Double getTaxPercentage() {
+  public @Nullable Double getTaxPercentage() {
     return taxPercentage;
   }
 
-  public void setTaxPercentage(Double taxPercentage) {
+  @JsonProperty("taxPercentage")
+  public void setTaxPercentage(@Nullable Double taxPercentage) {
     this.taxPercentage = taxPercentage;
   }
 
-  public InvoiceDTO description(String description) {
+  public InvoiceDTO description(@Nullable String description) {
     this.description = description;
     return this;
   }
@@ -280,15 +289,16 @@ public class InvoiceDTO {
   /**
    * Get description
    * @return description
-  */
+   */
   @Size(max = 255) 
   @Schema(name = "description", example = "Proyecto web completo", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("description")
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return description;
   }
 
-  public void setDescription(String description) {
+  @JsonProperty("description")
+  public void setDescription(@Nullable String description) {
     this.description = description;
   }
 
@@ -338,11 +348,8 @@ public class InvoiceDTO {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+  private String toIndentedString(@Nullable Object o) {
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 }
 

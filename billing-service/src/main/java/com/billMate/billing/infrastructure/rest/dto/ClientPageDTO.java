@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.lang.Nullable;
 import org.openapitools.jackson.nullable.JsonNullable;
 import java.time.OffsetDateTime;
 import jakarta.validation.Valid;
@@ -22,11 +23,11 @@ import jakarta.annotation.Generated;
  * ClientPageDTO
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-25T23:54:08.777998200+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-26T00:11:19.317367700+01:00[Europe/Madrid]", comments = "Generator version: 7.21.0")
 public class ClientPageDTO {
 
   @Valid
-  private List<@Valid ClientDTO> items = new ArrayList<>();
+  private List<ClientDTO> items = new ArrayList<>();
 
   private Integer page;
 
@@ -43,7 +44,7 @@ public class ClientPageDTO {
   /**
    * Constructor with only required parameters
    */
-  public ClientPageDTO(List<@Valid ClientDTO> items, Integer page, Integer size, Long totalElements, Integer totalPages) {
+  public ClientPageDTO(List<ClientDTO> items, Integer page, Integer size, Long totalElements, Integer totalPages) {
     this.items = items;
     this.page = page;
     this.size = size;
@@ -51,7 +52,7 @@ public class ClientPageDTO {
     this.totalPages = totalPages;
   }
 
-  public ClientPageDTO items(List<@Valid ClientDTO> items) {
+  public ClientPageDTO items(List<ClientDTO> items) {
     this.items = items;
     return this;
   }
@@ -67,15 +68,16 @@ public class ClientPageDTO {
   /**
    * Get items
    * @return items
-  */
+   */
   @NotNull @Valid 
   @Schema(name = "items", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("items")
-  public List<@Valid ClientDTO> getItems() {
+  public List<ClientDTO> getItems() {
     return items;
   }
 
-  public void setItems(List<@Valid ClientDTO> items) {
+  @JsonProperty("items")
+  public void setItems(List<ClientDTO> items) {
     this.items = items;
   }
 
@@ -87,7 +89,7 @@ public class ClientPageDTO {
   /**
    * Get page
    * @return page
-  */
+   */
   @NotNull 
   @Schema(name = "page", example = "0", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("page")
@@ -95,6 +97,7 @@ public class ClientPageDTO {
     return page;
   }
 
+  @JsonProperty("page")
   public void setPage(Integer page) {
     this.page = page;
   }
@@ -107,7 +110,7 @@ public class ClientPageDTO {
   /**
    * Get size
    * @return size
-  */
+   */
   @NotNull 
   @Schema(name = "size", example = "20", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("size")
@@ -115,6 +118,7 @@ public class ClientPageDTO {
     return size;
   }
 
+  @JsonProperty("size")
   public void setSize(Integer size) {
     this.size = size;
   }
@@ -127,7 +131,7 @@ public class ClientPageDTO {
   /**
    * Get totalElements
    * @return totalElements
-  */
+   */
   @NotNull 
   @Schema(name = "totalElements", example = "53", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("totalElements")
@@ -135,6 +139,7 @@ public class ClientPageDTO {
     return totalElements;
   }
 
+  @JsonProperty("totalElements")
   public void setTotalElements(Long totalElements) {
     this.totalElements = totalElements;
   }
@@ -147,7 +152,7 @@ public class ClientPageDTO {
   /**
    * Get totalPages
    * @return totalPages
-  */
+   */
   @NotNull 
   @Schema(name = "totalPages", example = "3", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("totalPages")
@@ -155,6 +160,7 @@ public class ClientPageDTO {
     return totalPages;
   }
 
+  @JsonProperty("totalPages")
   public void setTotalPages(Integer totalPages) {
     this.totalPages = totalPages;
   }
@@ -197,11 +203,8 @@ public class ClientPageDTO {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+  private String toIndentedString(@Nullable Object o) {
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 }
 

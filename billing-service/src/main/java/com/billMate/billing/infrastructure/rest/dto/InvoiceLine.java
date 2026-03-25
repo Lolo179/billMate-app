@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.springframework.lang.Nullable;
 import org.openapitools.jackson.nullable.JsonNullable;
 import java.time.OffsetDateTime;
 import jakarta.validation.Valid;
@@ -18,7 +19,7 @@ import jakarta.annotation.Generated;
  * InvoiceLine
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-25T23:54:08.777998200+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-26T00:11:19.317367700+01:00[Europe/Madrid]", comments = "Generator version: 7.21.0")
 public class InvoiceLine {
 
   private String description;
@@ -27,7 +28,7 @@ public class InvoiceLine {
 
   private Double unitPrice;
 
-  private Double total;
+  private @Nullable Double total;
 
   public InvoiceLine() {
     super();
@@ -50,7 +51,7 @@ public class InvoiceLine {
   /**
    * Get description
    * @return description
-  */
+   */
   @NotNull @Size(min = 3, max = 100) 
   @Schema(name = "description", example = "Desarrollo Web", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("description")
@@ -58,6 +59,7 @@ public class InvoiceLine {
     return description;
   }
 
+  @JsonProperty("description")
   public void setDescription(String description) {
     this.description = description;
   }
@@ -71,14 +73,15 @@ public class InvoiceLine {
    * Get quantity
    * minimum: 0.01
    * @return quantity
-  */
-  @NotNull @DecimalMin("0.01") 
+   */
+  @NotNull @DecimalMin(value = "0.01") 
   @Schema(name = "quantity", example = "5", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("quantity")
   public Double getQuantity() {
     return quantity;
   }
 
+  @JsonProperty("quantity")
   public void setQuantity(Double quantity) {
     this.quantity = quantity;
   }
@@ -92,19 +95,20 @@ public class InvoiceLine {
    * Get unitPrice
    * minimum: 0.01
    * @return unitPrice
-  */
-  @NotNull @DecimalMin("0.01") 
+   */
+  @NotNull @DecimalMin(value = "0.01") 
   @Schema(name = "unitPrice", example = "100.0", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("unitPrice")
   public Double getUnitPrice() {
     return unitPrice;
   }
 
+  @JsonProperty("unitPrice")
   public void setUnitPrice(Double unitPrice) {
     this.unitPrice = unitPrice;
   }
 
-  public InvoiceLine total(Double total) {
+  public InvoiceLine total(@Nullable Double total) {
     this.total = total;
     return this;
   }
@@ -112,15 +116,16 @@ public class InvoiceLine {
   /**
    * Get total
    * @return total
-  */
+   */
   
   @Schema(name = "total", accessMode = Schema.AccessMode.READ_ONLY, example = "500.0", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   @JsonProperty("total")
-  public Double getTotal() {
+  public @Nullable Double getTotal() {
     return total;
   }
 
-  public void setTotal(Double total) {
+  @JsonProperty("total")
+  public void setTotal(@Nullable Double total) {
     this.total = total;
   }
 
@@ -160,11 +165,8 @@ public class InvoiceLine {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(Object o) {
-    if (o == null) {
-      return "null";
-    }
-    return o.toString().replace("\n", "\n    ");
+  private String toIndentedString(@Nullable Object o) {
+    return o == null ? "null" : o.toString().replace("\n", "\n    ");
   }
 }
 
