@@ -25,7 +25,7 @@ import jakarta.annotation.Generated;
  */
 
 @Schema(name = "PatchInvoiceDTO", description = "DTO para actualización parcial de factura (RFC 7396 JSON Merge Patch). Solo válido en estado DRAFT. Solo los campos presentes en el body serán actualizados.")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-24T22:56:18.482070300+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-25T23:54:08.777998200+01:00[Europe/Madrid]")
 public class PatchInvoiceDTO {
 
   private Long clientId;
