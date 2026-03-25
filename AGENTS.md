@@ -2,7 +2,7 @@
 
 ## Proyecto
 
-**BillMate** es una aplicación de facturación para pequeños negocios. Monorepo Maven con 4 microservicios Java 21 + Spring Boot 3.3.0 (TFG del ciclo de DAW).
+**BillMate** es una aplicación de facturación para pequeños negocios. Monorepo Maven con 4 microservicios Java 21 + Spring Boot 4.0.4 (TFG del ciclo de DAW).
 
 | Servicio | Puerto | Arquitectura |
 |---|---|---|
@@ -16,7 +16,7 @@ Bases de datos: PostgreSQL 16 — `auth_db` (puerto 5434), `billing_db` (puerto 
 
 ## Stack
 
-Java 21, Spring Boot 3.3.0, Spring Cloud 2023.0.3, Spring Security + JWT (jjwt 0.11.5, HS256), Spring Data JPA + PostgreSQL 16, Apache Kafka 3.8.0 (KRaft) + Spring Kafka, OpenAPI Generator 7.3.0, iTextPDF 5.5.13.3, Thymeleaf, Lombok (excepto dominio billing), Maven multi-módulo, Docker multi-stage (eclipse-temurin:21 Alpine), GitHub Actions, Testcontainers, JUnit 5 + Mockito + MockMvc, logstash-logback-encoder 7.4 (JSON logging).
+Java 21, Spring Boot 4.0.4, Spring Cloud 2025.1.1, Spring Security + JWT (jjwt 0.11.5, HS256), Spring Data JPA + PostgreSQL 16, Apache Kafka 3.8.0 (KRaft) + Spring Kafka, OpenAPI Generator 7.21.0, iTextPDF 5.5.13.3, Thymeleaf, Lombok (excepto dominio billing), Maven multi-módulo, Docker multi-stage (eclipse-temurin:21 Alpine), GitHub Actions, Testcontainers 2.0.4, JUnit 5 + Mockito + MockMvc, logstash-logback-encoder 8.1 (JSON logging).
 
 ## Idioma
 
@@ -67,7 +67,7 @@ Java 21, Spring Boot 3.3.0, Spring Cloud 2023.0.3, Spring Security + JWT (jjwt 0
 |---|---|---|---|
 | Dominio (billing) | `shouldDoSomething` | JUnit 5 puro | Ninguno |
 | Use case (billing) | `shouldDoSomething` | JUnit 5 + fakes in-memory | Fake (NO Mockito) |
-| Controller (billing) | `givenX_whenY_thenZ` | `@WebMvcTest` + MockMvc | `@MockBean` + Mockito |
+| Controller (billing) | `givenX_whenY_thenZ` | `@WebMvcTest` + MockMvc | `@MockitoBean` + Mockito |
 | Integración (auth) | Descriptivo | Testcontainers (PostgreSQL 16-alpine) | DB real en contenedor |
 
 ## Bases de Datos
@@ -262,7 +262,7 @@ Cada petición entrante recibe un UUID de correlación (`x-Correlation-Id`) que 
 
 ### Logging Estructurado (JSON)
 
-Todos los servicios usan **logstash-logback-encoder 7.4** para emitir logs en formato JSON con el campo `correlationId` del MDC.
+Todos los servicios usan **logstash-logback-encoder 8.1** para emitir logs en formato JSON con el campo `correlationId` del MDC.
 
 **Configuración:** `logback-spring.xml` con `LogstashEncoder` en cada servicio.
 

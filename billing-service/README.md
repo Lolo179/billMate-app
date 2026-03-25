@@ -158,11 +158,11 @@ billing-service/
 ## 🛠️ Stack Tecnológico
 
 - Java 21 (LTS)
-- Spring Boot 3.3.0
+- Spring Boot 4.0.4
 - Spring Data JPA + JPA Specifications
 - PostgreSQL 16
 - Apache Kafka 3.8.0 (KRaft) + Spring Kafka
-- OpenAPI Generator 7.3.0 (contract-first)
+- OpenAPI Generator 7.21.0 (contract-first)
 - iText 5.5.13.3 (generación de PDF)
 - Caffeine (caché in-memory para idempotencia)
 - Maven
@@ -327,7 +327,7 @@ Al crear una factura, se publica un evento `InvoiceCreatedEvent` en el topic `in
 ## 📈 Observabilidad
 
 - **Correlation ID** (`CorrelationIdFilter`): lee el header `x-Correlation-Id` propagado por el API Gateway y lo coloca en MDC.
-- **Logs JSON estructurados**: `logback-spring.xml` con `LogstashEncoder` (logstash-logback-encoder 7.4). Compatible con el stack Grafana + Loki + Promtail.
+- **Logs JSON estructurados**: `logback-spring.xml` con `LogstashEncoder` (logstash-logback-encoder 8.1). Compatible con el stack Grafana + Loki + Promtail.
 
 ```bash
 # Levantar stack de observabilidad

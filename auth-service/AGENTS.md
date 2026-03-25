@@ -93,8 +93,8 @@ Tests de integración con Testcontainers (PostgreSQL 16-alpine).
 public abstract class AuthIntegrationTestBase {
     @Container
     @ServiceConnection
-    static PostgreSQLContainer<?> postgres =
-            new PostgreSQLContainer<>("postgres:16-alpine");
+    static PostgreSQLContainer postgres =
+            new PostgreSQLContainer("postgres:16-alpine");
 }
 ```
 

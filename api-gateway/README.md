@@ -18,11 +18,11 @@ El gateway se encarga de:
 ## 🛠️ Stack Tecnológico
 
 - Java 21 (LTS)
-- Spring Boot 3.3.0
-- Spring Cloud Gateway 2023.0.3 (WebFlux / Project Reactor)
+- Spring Boot 4.0.4
+- Spring Cloud Gateway 2025.1.1 / spring-cloud-starter-gateway-server-webflux 5.0.1 (WebFlux / Project Reactor)
 - Spring Security + JWT (jjwt 0.11.5, HS256)
 - Maven
-- logstash-logback-encoder 7.4 (logs JSON estructurados)
+- logstash-logback-encoder 8.1 (logs JSON estructurados)
 
 ---
 

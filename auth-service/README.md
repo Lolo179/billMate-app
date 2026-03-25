@@ -18,12 +18,12 @@ Este módulo se encarga de:
 ## 🧰 Stack Tecnológico
 
 - Java 21 (LTS)
-- Spring Boot 3.3.0
+- Spring Boot 4.0.4
 - Spring Security + JWT (jjwt 0.11.5, HS256)
 - PostgreSQL 16
 - Maven
-- Testcontainers (tests de integración)
-- logstash-logback-encoder 7.4 (logs JSON estructurados)
+- Testcontainers 2.0.4 (tests de integración)
+- logstash-logback-encoder 8.1 (logs JSON estructurados)
 
 ---
 

@@ -25,7 +25,7 @@ El servicio de facturación sigue estrictamente el patrón hexagonal:
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Java 21 (LTS)**, **Spring Boot 3.3.0**
+- **Java 21 (LTS)**, **Spring Boot 4.0.4**
 - **Spring Security + JWT**
 - **Spring Cloud Gateway (reactivo)**
 - **Spring Data JPA + PostgreSQL**

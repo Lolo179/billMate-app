@@ -133,7 +133,7 @@ Para evitar la advertencia Hibernate HHH90003004 con colecciones FETCH + paginac
 ## Contract-First (OpenAPI)
 
 - Contrato: `contract/contract-billing.yaml` (OpenAPI 3.0.1)
-- Plugin: `openapi-generator-maven-plugin 7.3.0`
+- Plugin: `openapi-generator-maven-plugin 7.21.0`
 - Genera interfaces API (`ClientsApi`, `InvoicesApi`) y DTOs
 - Regenerar: `mvn clean compile`
 - **NUNCA editar manualmente** archivos en `rest/dto/` ni interfaces `*Api`
@@ -294,16 +294,16 @@ class CreateClientServiceTest {
 
 **Ubicación:** `src/test/java/com/billMate/billing/infrastructure/rest/api/`
 
-`@WebMvcTest` + `@MockBean` + MockMvc + Mockito.
+`@WebMvcTest` + `@MockitoBean` + MockMvc + Mockito.
 
 ```java
 @WebMvcTest(controllers = ClientController.class)
 public class ClientControllerTest {
     @Autowired private MockMvc mockMvc;
-    @MockBean private CreateClientUseCase createClientUseCase;
-    @MockBean private PatchClientUseCase patchClientUseCase;  // ← incluir siempre
-    @MockBean private ClientRestMapper clientRestMapper;
-    // ... @MockBean para cada use case + mapper
+    @MockitoBean private CreateClientUseCase createClientUseCase;
+    @MockitoBean private PatchClientUseCase patchClientUseCase;  // ← incluir siempre
+    @MockitoBean private ClientRestMapper clientRestMapper;
+    // ... @MockitoBean para cada use case + mapper
 
     @Test
     void givenExistingClientId_whenGetClientById_thenReturnClientAndStatus200() throws Exception {
@@ -318,7 +318,7 @@ public class ClientControllerTest {
 
 **Reglas:**
 - Nombre: `given{Contexto}_when{Acción}_then{Resultado}`
-- `@MockBean` para **cada** use case inyectado en el controller (incluyendo `PatchClientUseCase` / `PatchInvoiceUseCase`)
+- `@MockitoBean` para **cada** use case inyectado en el controller (incluyendo `PatchClientUseCase` / `PatchInvoiceUseCase`)
 - Si el controller llama a `mapper.toSearchQuery(...)`, mockear también ese método
 - JSON bodies con text blocks (Java 21)
 - Secciones: `// Given`, `// When & Then`
