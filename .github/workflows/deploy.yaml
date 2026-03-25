@@ -1,4 +1,4 @@
-﻿name: Deploy
+name: Deploy
 
 on:
   # Se activa cuando CI completa con éxito en main (build+push+E2E)
@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 

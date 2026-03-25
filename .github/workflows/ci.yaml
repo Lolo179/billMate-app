@@ -24,26 +24,26 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Lowercase owner
         id: owner
         run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
 
       - name: Login to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & push auth-service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./auth-service
           file: ./auth-service/Dockerfile
@@ -53,7 +53,7 @@ jobs:
           cache-to: type=gha,scope=auth,mode=max
 
       - name: Build & push billing-service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./billing-service
           file: ./billing-service/Dockerfile
@@ -63,7 +63,7 @@ jobs:
           cache-to: type=gha,scope=billing,mode=max
 
       - name: Build & push api-gateway
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./api-gateway
           file: ./api-gateway/Dockerfile
@@ -73,7 +73,7 @@ jobs:
           cache-to: type=gha,scope=gateway,mode=max
 
       - name: Build & push frontend-service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend-service
           file: ./frontend-service/Dockerfile
@@ -97,19 +97,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
           cache: maven
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -303,7 +303,7 @@ jobs:
 
       - name: Upload E2E artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-artifacts
           path: |
@@ -318,7 +318,7 @@ jobs:
 
       - name: Upload Docker Compose logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-docker-logs
           path: .tmp/docker-compose.log
