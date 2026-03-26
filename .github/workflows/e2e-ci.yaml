@@ -109,7 +109,7 @@ jobs:
       - name: Start auth-service
         run: |
           java -jar auth-service/target/*.jar \
-            --spring.docker-compose.enabled=false \
+            --spring.docker.compose.enabled=false \
             --spring.datasource.url=jdbc:postgresql://localhost:5434/auth_db \
             --spring.datasource.username=postgres \
             --spring.datasource.password=postgres \
@@ -120,7 +120,7 @@ jobs:
       - name: Start billing-service
         run: |
           java -jar billing-service/target/*.jar \
-            --spring.docker-compose.enabled=false \
+            --spring.docker.compose.enabled=false \
             --spring.datasource.url=jdbc:postgresql://localhost:5433/billing_db \
             --spring.datasource.username=postgres \
             --spring.datasource.password=postgres \
@@ -132,7 +132,7 @@ jobs:
       - name: Start api-gateway
         run: |
           java -jar api-gateway/target/*.jar \
-            --spring.docker-compose.enabled=false \
+            --spring.docker.compose.enabled=false \
             --jwt.secret=${{ secrets.JWT_SECRET || 'dGVzdC1vbmx5LXNlY3JldC1ub3QtZm9yLXByb2R1Y3Rpb24tMTIz' }} \
             > .tmp/api-gateway.log 2>&1 &
           echo $! > .tmp/api-gateway.pid
