@@ -9,16 +9,18 @@ import org.springframework.kafka.core.ProducerFactory;
 
 /**
  * Configuración explícita del KafkaTemplate tipado para envío de eventos de facturación.
- * Spring Boot 4.x solo auto-configura KafkaTemplate&lt;Object, Object&gt;; este bean provee
- * el tipo concreto que requiere InvoiceKafkaAdapter.
+ * Spring Boot 4.x solo auto-configura ProducerFactory&lt;Object, Object&gt; y
+ * KafkaTemplate&lt;Object, Object&gt;; este bean proyecta el tipo concreto que requiere
+ * InvoiceKafkaAdapter. El cast es seguro por el type erasure de Java en tiempo de ejecución.
  */
 @Configuration
 @ConditionalOnProperty(name = "billmate.kafka.enabled", havingValue = "true")
 public class KafkaConfig {
 
     @Bean
+    @SuppressWarnings("unchecked")
     public KafkaTemplate<String, InvoiceCreatedEvent> invoiceKafkaTemplate(
-            ProducerFactory<String, InvoiceCreatedEvent> producerFactory) {
-        return new KafkaTemplate<>(producerFactory);
+            ProducerFactory<Object, Object> producerFactory) {
+        return new KafkaTemplate<>((ProducerFactory<String, InvoiceCreatedEvent>) (ProducerFactory<?, ?>) producerFactory);
     }
 }
