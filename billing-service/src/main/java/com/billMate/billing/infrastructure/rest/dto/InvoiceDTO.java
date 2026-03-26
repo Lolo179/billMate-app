@@ -27,7 +27,7 @@ import jakarta.annotation.Generated;
  * InvoiceDTO
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-24T22:56:18.482070300+01:00[Europe/Madrid]")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-03-26T00:41:50.907954936Z[Etc/UTC]")
 public class InvoiceDTO {
 
   private Long invoiceId;
@@ -154,7 +154,7 @@ public class InvoiceDTO {
    * @return date
   */
   @NotNull @Valid 
-  @Schema(name = "date", example = "Sun Jun 01 02:00:00 CEST 2025", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(name = "date", example = "Sun Jun 01 00:00:00 UTC 2025", requiredMode = Schema.RequiredMode.REQUIRED)
   @JsonProperty("date")
   public LocalDate getDate() {
     return date;
