@@ -10,13 +10,13 @@
 | Auth Service | 8081 | Capas (Controller → Service → Repository) |
 | Billing Service | 8082 | Hexagonal estricta (Ports & Adapters) |
 | Notification Service | 8084 | Capas (Listener → Log, sin BD) |
-| Frontend Service | 8083 | SSR (Spring Boot + Thymeleaf + vanilla JS) |
+| Frontend Service | 8083 | SPA independiente (React 18 + TypeScript + Vite 6 + Nginx) |
 
 Bases de datos: PostgreSQL 16 — `auth_db` (puerto 5434), `billing_db` (puerto 5433).
 
 ## Stack
 
-Java 21, Spring Boot 3.3.0, Spring Cloud 2023.0.3, Spring Security + JWT (jjwt 0.11.5, HS256), Spring Data JPA + PostgreSQL 16, Apache Kafka 3.8.0 (KRaft) + Spring Kafka, OpenAPI Generator 7.3.0, iTextPDF 5.5.13.3, Thymeleaf, Lombok (excepto dominio billing), Maven multi-módulo, Docker multi-stage (eclipse-temurin:21 Alpine), GitHub Actions, Testcontainers, JUnit 5 + Mockito + MockMvc, logstash-logback-encoder 7.4 (JSON logging).
+Java 21, Spring Boot 3.3.0, Spring Cloud 2023.0.3, Spring Security + JWT (jjwt 0.11.5, HS256), Spring Data JPA + PostgreSQL 16, Apache Kafka 3.8.0 (KRaft) + Spring Kafka, OpenAPI Generator 7.3.0, iTextPDF 5.5.13.3, Lombok (excepto dominio billing), Maven multi-módulo, Docker multi-stage (eclipse-temurin:21 Alpine), GitHub Actions, Testcontainers, JUnit 5 + Mockito + MockMvc, logstash-logback-encoder 7.4 (JSON logging). **Frontend:** React 18, TypeScript 5, Vite 6, react-router-dom v6, Zod, MSW 2, Vitest + Testing Library, Nginx 1.27.
 
 ## Idioma
 
@@ -318,4 +318,4 @@ Cada servicio tiene su propio `AGENTS.md` con convenciones específicas:
 | `auth-service/AGENTS.md` | Capas, endpoints, JWT, seguridad, Testcontainers |
 | `billing-service/AGENTS.md` | Hexagonal, contract-first, testing con fakes, máquina de estados |
 | `notification-service/AGENTS.md` | Consumidor Kafka, simulación de email, sin BD |
-| `frontend-service/AGENTS.md` | Thymeleaf SSR, vanilla JS, comunicación con gateway |
+| `frontend-service/AGENTS.md` | SPA React + TypeScript, arquitectura hexagonal cliente, MSW, comunicación con gateway |

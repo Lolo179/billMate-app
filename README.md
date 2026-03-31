@@ -15,7 +15,7 @@
 ```mermaid
 graph TB
     Browser["🌐 Navegador"]
-    FE["Frontend Service\nThymeleaf + Vite\n:8083 / :5173"]
+    FE["Frontend Service\nReact 18 + TypeScript + Vite\n:8083 / :5173"]
     GW["API Gateway\nSpring Cloud Gateway\n:8080"]
     AUTH["Auth Service\n:8081"]
     BILLING["Billing Service\nArquitectura Hexagonal\n:8082"]
