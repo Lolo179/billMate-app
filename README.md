@@ -12,6 +12,28 @@
 - **API Gateway** (Puerto 8080): Entrada central para peticiones, validación de JWT
 - **Frontend Service** (Puerto 5173 en desarrollo, 8083 en contenedor): React + TypeScript + Vite
 
+```mermaid
+graph TB
+    Browser["🌐 Navegador"]
+    FE["Frontend Service\nThymeleaf + Vite\n:8083 / :5173"]
+    GW["API Gateway\nSpring Cloud Gateway\n:8080"]
+    AUTH["Auth Service\n:8081"]
+    BILLING["Billing Service\nArquitectura Hexagonal\n:8082"]
+    NOTIF["Notification Service\n:8084"]
+    AUTH_DB[("auth_db\nPostgreSQL :5434")]
+    BILLING_DB[("billing_db\nPostgreSQL :5433")]
+    KAFKA[["Apache Kafka\n:29092"]]
+
+    Browser -->|HTTP| FE
+    FE -->|REST| GW
+    GW -->|"JWT filter\n(ruta pública)"| AUTH
+    GW -->|JWT filter| BILLING
+    AUTH -->|JPA| AUTH_DB
+    BILLING -->|JPA| BILLING_DB
+    BILLING -->|"invoice.created\n(async)"| KAFKA
+    KAFKA -->|invoice.created| NOTIF
+```
+
 ### Arquitectura Hexagonal en Billing Service
 
 El servicio de facturación sigue estrictamente el patrón hexagonal:
@@ -20,6 +42,42 @@ El servicio de facturación sigue estrictamente el patrón hexagonal:
 - **Aplicación** con casos de uso que solo dependen de puertos de dominio
 - **Infraestructura** con adaptadores REST, JPA y PDF, y mappers dedicados por capa
 - Sin servicios legacy – toda la lógica fluye a través de use cases
+
+```mermaid
+graph LR
+    subgraph Driving["⬇️ Driving Adapters (Infraestructura REST)"]
+        REST["ClientController\nInvoiceController\n(REST Adapter)"]
+    end
+
+    subgraph Domain["🔷 Dominio (Hexágono)"]
+        UC_IN["Puertos de Entrada\n(UseCase interfaces)"]
+        UC_IMPL["Use Cases\n(CreateClientService\nCreateInvoiceService\n...)"]
+        MODEL["Modelos de Dominio\n(Client, Invoice, InvoiceLine)"]
+        UC_OUT["Puertos de Salida\n(RepositoryPort\nEventPublisherPort)"]
+    end
+
+    subgraph Driven["⬆️ Driven Adapters (Infraestructura Persistencia/Eventos)"]
+        JPA["JPA Adapters\n(ClientJpaAdapter\nInvoiceJpaAdapter)"]
+        KAFKA_A["Kafka Adapter\n(KafkaEventPublisher)"]
+        PDF["PDF Adapter\n(iTextPDF)"]
+    end
+
+    subgraph Infra["🔧 Infraestructura Externa"]
+        DB[("billing_db\nPostgreSQL :5433")]
+        KAFKA_B[["Apache Kafka\n:29092"]]
+    end
+
+    REST -->|Command| UC_IN
+    UC_IN --> UC_IMPL
+    UC_IMPL --> MODEL
+    UC_IMPL -->|RepositoryPort| UC_OUT
+    UC_IMPL -->|EventPublisherPort| UC_OUT
+    UC_OUT --> JPA
+    UC_OUT --> KAFKA_A
+    UC_OUT --> PDF
+    JPA --> DB
+    KAFKA_A --> KAFKA_B
+```
 
 ---
 
@@ -113,6 +171,55 @@ docker-compose -f observability/docker-compose.yaml up -d
 
 ```
 Authorization: Bearer <tu-token-jwt>
+```
+
+### Flujo de Autenticación JWT
+
+```mermaid
+sequenceDiagram
+    actor User as Usuario
+    participant FE as Frontend :5173
+    participant GW as API Gateway :8080
+    participant AUTH as Auth Service :8081
+    participant BILLING as Billing Service :8082
+
+    User->>FE: Login (usuario/contraseña)
+    FE->>GW: POST /api/auth/login
+    GW->>AUTH: POST /api/auth/login (ruta pública, sin JWT)
+    AUTH-->>GW: { token: "eyJ..." }
+    GW-->>FE: { token: "eyJ..." }
+    FE->>FE: Guarda JWT en sesión
+
+    User->>FE: Ver clientes
+    FE->>GW: GET /api/clients (Authorization: Bearer eyJ...)
+    GW->>GW: JwtAuthenticationFilter valida firma JWT
+    GW->>BILLING: GET /api/clients (x-Correlation-Id propagado)
+    BILLING-->>GW: ClientPageDTO
+    GW-->>FE: ClientPageDTO
+```
+
+### Flujo de Creación de Factura (con evento Kafka)
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend :5173
+    participant GW as API Gateway :8080
+    participant BILLING as Billing Service :8082
+    participant DB as billing_db :5433
+    participant KAFKA as Apache Kafka
+    participant NOTIF as Notification Service :8084
+
+    FE->>GW: POST /api/invoices (Bearer JWT)
+    GW->>GW: Valida JWT
+    GW->>BILLING: POST /api/invoices
+    BILLING->>DB: INSERT invoice + lines
+    DB-->>BILLING: OK
+    BILLING-->>GW: InvoiceDTO 201
+    GW-->>FE: InvoiceDTO 201
+    Note over BILLING,KAFKA: Publicación asíncrona (fire-and-forget)
+    BILLING-)KAFKA: invoice.created event (@Async)
+    KAFKA-)NOTIF: InvoiceCreatedEvent
+    NOTIF->>NOTIF: Simula envío de email (log JSON)
 ```
 
 ---
